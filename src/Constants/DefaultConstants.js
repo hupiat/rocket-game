@@ -19,7 +19,3 @@ export const WALL_BLOCKS_MAX_LENGTH = 10
 export const WALL_BLOCKS_WIDTH_PX = 50
 
 export const WALL_BLOCKS_HEIGHT_PX = 50
-
-export const ENEMY_WIDTH_PX = 100
-
-export const ENEMY_HEIGHT_PX = 100

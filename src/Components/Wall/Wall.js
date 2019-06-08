@@ -21,9 +21,9 @@ export default class Wall extends Component {
      * Generate a wall with random values for a given position
      * A mask system is used to handle the generations and provide a better gameplay
      * @param {number} left left position in px
-     * @param {object} reference optional array reference to store the generated instance,
-     * the index of stored instance is the generated key for this element
-     * @returns the instance of generated element
+     * @param {object} reference optional array reference to store the element reference,
+     * the index of the reference is the generated key for this element
+     * @returns generated element
      */
     static generate(left, reference = []) {
         const key = Math.random()
