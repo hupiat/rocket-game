@@ -1,4 +1,4 @@
-#RESUME : 
+# RESUME : 
 
 
 This game is a 'Flappy bird' like using a rocket flying through space.
@@ -10,7 +10,7 @@ The score is increasing with the game duration.
 
 
 
-#KEYS : 
+# KEYS : 
 
 
 Up arrow : move the rocket to top
@@ -22,7 +22,7 @@ Escape : Enable or disable game pause
 
 
 
-#RUN :
+# RUN :
 
 
 Open a bash in the 'src' directory
