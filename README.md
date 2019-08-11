@@ -30,6 +30,3 @@ Open a bash in the 'src' directory
 Install the npm tool if you don't have it yet
 
 Run the command 'npm i && npm start'
-
-
-The application is deployed at : https://rocket-game.herokuapp.com
