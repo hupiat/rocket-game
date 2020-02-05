@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react'
+import React, { Component } from 'react'
 import Element from '../Element/Element'
 import WallImage from './Wall.png'
 import * as DefaultConstants from '../../Constants/DefaultConstants'
@@ -6,7 +6,7 @@ import * as DirectionConstants from '../../Constants/DirectionConstants'
 
 // Handle consistency for many walls generated next to each other
 // Increasing this value will make the game easier to play
-const GENERATION_MASK_TOLERANCE = 3
+const GENERATION_TOLERANCE = 3
 
 /**
  * Properties : 
@@ -35,15 +35,15 @@ export default class Wall extends Component {
         const randomIdx = Math.floor(Math.random() * Math.floor(2))
         const direction = randomIdx % 2 === 0 ? DirectionConstants.TOP : DirectionConstants.BOTTOM
 
-        if (GENERATION_MASK_TOLERANCE > 0) {
+        if (GENERATION_TOLERANCE > 0) {
             // Handling length using generation mask
-            if (this._generationMask && this._generationMask.direction !== direction) {
-                while (Math.abs(this._generationMask.length - length) < GENERATION_MASK_TOLERANCE && length > 1) {
+            if (this._generationTolerance && this._generationTolerance.direction !== direction) {
+                while (Math.abs(this._generationTolerance.length - length) < GENERATION_TOLERANCE && length > 1) {
                     length--
                 }
             }
             // Storing mask
-            this._generationMask = {
+            this._generationTolerance = {
                 length: length,
                 direction: direction
             }
@@ -68,7 +68,7 @@ export default class Wall extends Component {
         }
         if (this.props.direction === DirectionConstants.BOTTOM) {
             // If the wall is starting from the bottom
-            const bottomCompensation = DefaultConstants.WALL_BLOCKS_HEIGHT_PX / 2
+            const bottomCompensation = DefaultConstants.WALL_BLOCKS_HEIGHT_PX
             if ((window.screen.height - wallHeightPx) - (top + DefaultConstants.ROCKET_HEIGHT_PX + bottomCompensation) <= 0) {
                 return true
             }
@@ -98,7 +98,7 @@ export default class Wall extends Component {
             }
             if (this.props.direction === DirectionConstants.BOTTOM) {
                 // Reducing the top shift
-                blockStyle.top = `calc(93vh - ${shift}px)`
+                blockStyle.top = `calc(95vh - ${shift}px)`
             }
 
             blocks.push(
@@ -111,9 +111,9 @@ export default class Wall extends Component {
 
     render() {
         return (
-            <Fragment>
+            <>
                 { this.renderBlocks() }
-            </Fragment>
+            </>
         )
     }
 }
