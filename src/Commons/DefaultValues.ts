@@ -1,0 +1,5 @@
+export const ROCKET_LIVES_NUMBER = 3
+
+export const ROCKET_IMMUNE_TIME_MS = 1000
+
+export const WALL_BLOCKS_MAX_LENGTH = 10
