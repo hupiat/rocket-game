@@ -1,16 +1,14 @@
 import React, { CSSProperties } from "react";
 import { Direction } from "../../Commons/Direction";
 import WallImage from "./Wall.png";
-import { useWallPositions } from "./Position";
 
 interface IProps {
-	index: number;
 	length: number;
+	leftPosition: number;
 	direction: Direction;
 }
 
-const Wall = ({ index, length, direction }: IProps) => {
-	const { getWallPosition } = useWallPositions();
+const Wall = ({ length, leftPosition, direction }: IProps) => {
 	const blocks: JSX.Element[] = [];
 
 	for (let i = 0; i < length; i++) {
@@ -18,17 +16,19 @@ const Wall = ({ index, length, direction }: IProps) => {
 			position: "absolute",
 			width: `50px`,
 			height: `50px`,
-			left: `${getWallPosition(index)}vw`
+			left: `${leftPosition}px`
 		};
 
+		const shift = i * 50;
+
 		if (direction === Direction.TOP) {
-			style.top = `${i}vh`;
+			style.top = `${shift}px`;
 		}
 		if (direction === Direction.BOTTOM) {
-			style.top = `calc(100vh - ${i}vh)`;
+			style.top = `calc(95vh - ${shift}px)`;
 		}
 
-		blocks.push(<img src={WallImage} alt={"Wall"} style={style} />);
+		blocks.push(<img src={WallImage} alt={"Wall"} style={style} key={i} />);
 	}
 
 	return <>{blocks}</>;

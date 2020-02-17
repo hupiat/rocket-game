@@ -1,4 +1,4 @@
-import React, { Component, useState, CSSProperties, useEffect } from "react";
+import React, { useState, CSSProperties, useEffect, useCallback } from "react";
 import Sound from "react-sound";
 import Player from "../Player";
 import Wall from "../Wall";
@@ -7,9 +7,8 @@ import Background from "./Background.png";
 import Music from "./Music.mp3";
 import { ROCKET_LIVES_NUMBER } from "../../Commons/DefaultValues";
 import { IWallValues, generateWall } from "../Wall/Generation";
-import { useWallPositions } from "../Wall/Position";
-import { usePlayerPosition } from "../Player/Position";
 import { ESCAPE } from "../../Commons/KeyCodes";
+import { usePlayerPositionContext } from "../Player/Position";
 
 const style: CSSProperties = {
 	height: "100vh",
@@ -17,11 +16,11 @@ const style: CSSProperties = {
 	backgroundImage: `url(${Background})`
 };
 
-// Number of generated walls at the start
-const WALLS_NUMBER = 10;
+// Value in px used to multiply the index when generating the walls, representing the space between each one
+export const WALLS_SPACE_PX = 100;
 
-// Value in px used to multiply the index when rendering the walls, representing the space between each one
-const WALLS_SPACE_PX = 100;
+// Number of generated walls at the start
+const WALLS_NUMBER = 100;
 
 // Value in px representing the walls shift at each iteration
 const SHIFT_INCREMENT_PX = 5;
@@ -36,16 +35,23 @@ const Game = () => {
 	const [score, setScore] = useState<number>(0);
 	const [isLosingLives, setIsLosingLives] = useState<boolean>(false);
 	const [isPaused, setIsPaused] = useState<boolean>(false);
-	const { getWallPosition, setWallPosition } = useWallPositions();
-	const { setKeysEvents } = usePlayerPosition();
+	const { keysListener } = usePlayerPositionContext();
 
-	const timeout = () => {
-		setShift(shift => shift + SHIFT_INCREMENT_PX);
+	const timeout = useCallback(() => {
+		if (isPaused) {
+			return;
+		}
 
-		walls.forEach((_, i) =>
-			setWallPosition(i, getWallPosition(i) + SHIFT_INCREMENT_PX)
+		setShift(1000);
+
+		setWalls(walls =>
+			walls.map(wall => {
+				wall.leftPosition = wall.leftPosition - SHIFT_INCREMENT_PX;
+				return wall;
+			})
 		);
 
+		console.log(shift);
 		if (shift % WALLS_SPACE_PX === 0) {
 			setScore(score + 1);
 		}
@@ -53,50 +59,40 @@ const Game = () => {
 		if (lives > 0 && !isPaused) {
 			setTimeout(timeout, TIMEOUT_INCREMENT_MS);
 		}
-	};
+	}, [isPaused, lives, score, shift, setShift]);
 
-	const start = () => {
+	const start = useCallback(() => {
 		setShift(0);
 
 		setWalls(walls => {
 			walls = [];
 			for (let i = 1; i <= WALLS_NUMBER; i++) {
-				walls.push(generateWall());
-				setWallPosition(i - 1, i * WALLS_SPACE_PX);
+				walls.push(generateWall(i));
 			}
 			return walls;
 		});
 
-		setKeysEvents();
-
 		timeout();
-	};
+	}, [setShift, setWalls, timeout]);
 
-	useEffect(() => {
-		window.addEventListener("keydown", (e: KeyboardEvent) => {
+	const handleKeyPress = useCallback(
+		(e: React.KeyboardEvent<HTMLDivElement>) => {
 			if (e.keyCode === ESCAPE && lives > 0) {
-				if (isPaused) {
-					setKeysEvents();
-					timeout();
-				} else {
-					setKeysEvents(false);
-				}
-				setIsPaused(!isPaused);
+				setIsPaused(isPaused => !isPaused);
 			}
-		});
+			if (!isPaused) {
+				keysListener(e);
+			}
+		},
+		[isPaused, lives, keysListener]
+	);
 
-		start();
-	}, []);
+	useEffect(start, []);
 
 	return (
-		<div style={style}>
+		<div tabIndex={1} style={style} onKeyDown={handleKeyPress}>
 			{walls.map((wall, i) => (
-				<Wall
-					key={i}
-					index={i}
-					length={wall.length}
-					direction={wall.direction}
-				/>
+				<Wall key={i} {...wall} />
 			))}
 
 			<Player isBlinking={isLosingLives} />

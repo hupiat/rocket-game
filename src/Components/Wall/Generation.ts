@@ -1,5 +1,6 @@
 import { Direction } from "../../Commons/Direction";
 import { WALL_BLOCKS_MAX_LENGTH } from "../../Commons/DefaultValues";
+import { WALLS_SPACE_PX } from "../Game";
 
 // Handle consistency for many walls generated next to each other
 // Increasing this value will make the game easier to play
@@ -10,10 +11,11 @@ let previousDirection: number;
 
 export interface IWallValues {
 	length: number;
+	leftPosition: number;
 	direction: Direction;
 }
 
-export const generateWall = (): IWallValues => {
+export const generateWall = (index: number): IWallValues => {
 	let length: number = Math.floor(
 		Math.random() * (WALL_BLOCKS_MAX_LENGTH - 1) + 1
 	);
@@ -36,8 +38,11 @@ export const generateWall = (): IWallValues => {
 		previousDirection = direction;
 	}
 
+	const leftPosition: number = index * WALLS_SPACE_PX;
+
 	return {
 		length,
-		direction
+		direction,
+		leftPosition
 	};
 };

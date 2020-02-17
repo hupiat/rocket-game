@@ -3,13 +3,13 @@ import Sound from "react-sound";
 import "./Player.css";
 import HitSound from "./HitSound.mp3";
 import RocketImage from "./Rocket.gif";
-import { usePlayerPosition } from "./Position";
+import { usePlayerPositionContext } from "./Position";
 
 const style: CSSProperties = {
 	position: "absolute",
 	left: "20px",
-	width: "50px",
-	height: "50px",
+	width: "100px",
+	height: "100px",
 	transform: "rotate(90deg)"
 };
 
@@ -18,7 +18,7 @@ interface IProps {
 }
 
 const Player = ({ isBlinking }: IProps) => {
-	const { position } = usePlayerPosition();
+	const { position } = usePlayerPositionContext();
 
 	return (
 		<>
@@ -29,6 +29,7 @@ const Player = ({ isBlinking }: IProps) => {
 					animation: isBlinking ? "blink 1s linear infinite" : "",
 					top: `${position}px`
 				}}
+				alt="rocket"
 			/>
 
 			<Sound
