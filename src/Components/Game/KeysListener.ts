@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { usePlayerContext } from "../Player/Context";
-import { ESCAPE } from "../../Commons/KeyCodes";
+import { ESCAPE, ARROW_DOWN, ARROW_UP } from "../../Commons/KeyCodes";
 
 interface IGameKeysListenerValues {
 	handleKeyPress: (
@@ -11,19 +11,25 @@ interface IGameKeysListenerValues {
 
 export const useGameKeysListener = (
 	isPaused: boolean,
-	lives: number,
 	setIsPaused: (isPaused: boolean) => void
 ): IGameKeysListenerValues => {
-	const { playerKeysListener } = usePlayerContext();
+	const { playerKeysListener, lives } = usePlayerContext();
 
 	const handleKeyPress = useCallback(
 		(e: React.KeyboardEvent<HTMLDivElement>, loop: () => void): void => {
 			if (e.keyCode === ESCAPE && lives > 0) {
+				const wasPaused = isPaused;
 				setIsPaused(!isPaused);
+				if (wasPaused) {
+					loop();
+				}
 			}
-			if (!isPaused) {
+			if (
+				(e.keyCode === ARROW_DOWN || e.keyCode === ARROW_UP) &&
+				!isPaused &&
+				lives > 0
+			) {
 				playerKeysListener(e);
-				loop();
 			}
 		},
 		[setIsPaused, isPaused, lives, playerKeysListener]

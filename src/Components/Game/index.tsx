@@ -33,7 +33,7 @@ const style: CSSProperties = {
 export const WALLS_SPACE_PX = 100;
 
 // Number of generated walls at the beginning
-const WALLS_NUMBER = 10;
+const WALLS_NUMBER = 20;
 
 // Value in px representing the walls shift at each iteration
 const SHIFT_INCREMENT_PX = 5;
@@ -47,6 +47,7 @@ const Game = () => {
 	const shift = useRef<number>(0);
 	const { isPaused, setIsPaused, pauseRef } = usePause();
 	const { isKnockingWall } = useCollisions();
+	const { handleKeyPress } = useGameKeysListener(isPaused, setIsPaused);
 	const {
 		lives,
 		livesRef,
@@ -54,7 +55,6 @@ const Game = () => {
 		setLives,
 		setIsLosingLives
 	} = usePlayerContext();
-	const { handleKeyPress } = useGameKeysListener(isPaused, lives, setIsPaused);
 
 	const loop = useCallback((): void => {
 		if (!pauseRef.current && livesRef.current > 0) {
@@ -89,7 +89,7 @@ const Game = () => {
 		// Incrementing the total shift from the beginning,
 		// used only to increment the score
 		shift.current += SHIFT_INCREMENT_PX;
-		if (shift.current % WALLS_SPACE_PX === 0) {
+		if (shift.current % WALLS_SPACE_PX === 0 && lives > 0) {
 			setScore(score + 1);
 		}
 
@@ -99,7 +99,8 @@ const Game = () => {
 		);
 		if (
 			shift.current % WALLS_SPACE_PX === 0 &&
-			score > WALLS_NUMBER - maxWallsOnScreen
+			score > WALLS_NUMBER - maxWallsOnScreen &&
+			lives > 0
 		) {
 			setWalls(walls => {
 				if (walls.length > WALLS_NUMBER) {
@@ -109,7 +110,7 @@ const Game = () => {
 				return walls;
 			});
 		}
-	}, [walls, score, setLives]);
+	}, [walls, score, setLives, lives]);
 
 	// Checking collisions
 	useEffect(() => {
