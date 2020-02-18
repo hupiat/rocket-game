@@ -1,11 +1,11 @@
 import React from "react";
 import Game from "./Components/Game";
-import PlayerPositionContext from "./Components/Player/Position";
+import PlayerContext from "./Components/Player/Context";
 
 const App = () => (
-	<PlayerPositionContext>
+	<PlayerContext>
 		<Game />
-	</PlayerPositionContext>
+	</PlayerContext>
 );
 
 export default App;

@@ -1,6 +1,7 @@
 import React, { CSSProperties } from "react";
 import { Direction } from "../../Commons/Direction";
-import WallImage from "./Wall.png";
+import WallImage from "./assets/Wall.png";
+import { WALL_WIDTH_PX, WALL_HEIGHT_PX } from "../../Commons/DefaultValues";
 
 interface IProps {
 	length: number;
@@ -14,8 +15,8 @@ const Wall = ({ length, leftPosition, direction }: IProps) => {
 	for (let i = 0; i < length; i++) {
 		const style: CSSProperties = {
 			position: "absolute",
-			width: `50px`,
-			height: `50px`,
+			width: `${WALL_WIDTH_PX}px`,
+			height: `${WALL_HEIGHT_PX}px`,
 			left: `${leftPosition}px`
 		};
 

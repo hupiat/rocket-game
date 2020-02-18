@@ -1,5 +1,5 @@
 import React, { CSSProperties } from "react";
-import HeartImage from "./Heart.png";
+import HeartImage from "./assets/Heart.png";
 
 const heartStyle: CSSProperties = {
 	position: "relative",
@@ -26,13 +26,13 @@ const menuStyle: CSSProperties = {
 	textAlign: "center"
 };
 
-const GAME_OVER_TEXT = "GAME OVER";
+const SCORE_TEXT: string = "Your score : ";
 
-const SCORE_TEXT = "Your score : ";
+const RETRY_TEXT: string = "Try again";
 
-const RETRY_TEXT = "Try again";
+const PAUSE_TEXT: string = "PAUSE";
 
-const PAUSE_TEXT = "PAUSE";
+const GAME_OVER_TEXT: string = "GAME OVER";
 
 interface IProps {
 	lives: number;
@@ -49,9 +49,9 @@ const HUD = ({
 	isRetryMenuEnabled,
 	onRetry
 }: IProps) => {
-	const renderScore = () => <b style={scoreStyle}>{score}</b>;
+	const renderScore = (): JSX.Element => <b style={scoreStyle}>{score}</b>;
 
-	const renderMenu = (isRetry: boolean = false) => (
+	const renderMenu = (isRetry: boolean = false): JSX.Element => (
 		<div style={menuStyle}>
 			<h1>{isRetry ? GAME_OVER_TEXT : PAUSE_TEXT}</h1>
 
@@ -63,7 +63,7 @@ const HUD = ({
 		</div>
 	);
 
-	const renderLives = () => {
+	const renderLives = (): JSX.Element[] => {
 		const livesImages: JSX.Element[] = [];
 
 		for (let i = 0; i < lives; i++) {
