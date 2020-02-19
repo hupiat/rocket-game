@@ -21,6 +21,7 @@ import { usePause } from "./Pause";
 import { useGameKeysListener } from "./KeysListener";
 import { useCollisions } from "./Collisions";
 import { usePlayerContext } from "../Player/Context";
+import { useSynchronizer } from "./Synchronizer";
 
 const style: CSSProperties = {
 	height: "100vh",
@@ -48,6 +49,7 @@ const Game = () => {
 	const { isPaused, setIsPaused, pauseRef } = usePause();
 	const { isKnockingWall } = useCollisions();
 	const { handleKeyPress } = useGameKeysListener(isPaused, setIsPaused);
+	const { synchronize } = useSynchronizer(3);
 	const {
 		lives,
 		livesRef,
@@ -86,38 +88,42 @@ const Game = () => {
 	}, [setWalls, loop, setIsPaused, setLives]);
 
 	useEffect(() => {
-		// Incrementing the total shift from the beginning,
-		// used only to increment the score
-		shift.current += SHIFT_INCREMENT_PX;
-		if (shift.current % WALLS_SPACE_PX === 0 && lives > 0) {
-			setScore(score + 1);
-		}
+		synchronize(0, () => {
+			// Incrementing the total shift from the beginning,
+			// used only to increment the score
+			shift.current += SHIFT_INCREMENT_PX;
+			if (shift.current % WALLS_SPACE_PX === 0 && lives > 0) {
+				setScore(score + 1);
+			}
 
-		// Handling infinite generation
-		const maxWallsOnScreen = Math.round(
-			window.screen.width / (WALLS_SPACE_PX + WALL_WIDTH_PX)
-		);
-		if (
-			shift.current % WALLS_SPACE_PX === 0 &&
-			score > WALLS_NUMBER - maxWallsOnScreen &&
-			lives > 0
-		) {
-			setWalls(walls => {
-				if (walls.length > WALLS_NUMBER) {
-					walls.shift();
-				}
-				walls.push(generateWall(WALLS_NUMBER));
-				return walls;
-			});
-		}
-	}, [walls, score, setLives, lives]);
+			// Handling infinite generation
+			const maxWallsOnScreen = Math.round(
+				window.screen.width / (WALLS_SPACE_PX + WALL_WIDTH_PX)
+			);
+			if (
+				shift.current % WALLS_SPACE_PX === 0 &&
+				score > WALLS_NUMBER - maxWallsOnScreen &&
+				lives > 0
+			) {
+				setWalls(walls => {
+					if (walls.length > WALLS_NUMBER) {
+						walls.shift();
+					}
+					walls.push(generateWall(WALLS_NUMBER));
+					return walls;
+				});
+			}
+		});
+	}, [walls, score, setLives, lives, synchronize]);
 
 	// Checking collisions
 	useEffect(() => {
-		if (walls.some(isKnockingWall) && !isLosingLives && !isPaused) {
-			setLives(lives - 1);
-			setIsLosingLives(true);
-		}
+		synchronize(1, () => {
+			if (walls.some(isKnockingWall) && !isLosingLives && !isPaused) {
+				setLives(lives - 1);
+				setIsLosingLives(true);
+			}
+		});
 	}, [
 		walls,
 		isKnockingWall,
@@ -125,12 +131,15 @@ const Game = () => {
 		isPaused,
 		lives,
 		setLives,
-		setIsLosingLives
+		setIsLosingLives,
+		synchronize
 	]);
 
 	useEffect(() => {
-		setTimeout(() => setIsLosingLives(false), PLAYER_IMMUNE_TIME_MS);
-	}, [lives, setIsLosingLives]);
+		synchronize(2, () =>
+			setTimeout(() => setIsLosingLives(false), PLAYER_IMMUNE_TIME_MS)
+		);
+	}, [lives, setIsLosingLives, synchronize]);
 
 	useEffect(start, []);
 
