@@ -13,9 +13,9 @@
 # KEYS : 
 
 
-- Up arrow : move the rocket to top
+- Up arrow : Move the rocket to top
 
-- Down arrow : move the rocket to bottom
+- Down arrow : Move the rocket to bottom
 
 - Escape : Enable or disable game pause
 
