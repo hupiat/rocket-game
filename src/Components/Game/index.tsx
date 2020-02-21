@@ -74,7 +74,6 @@ const Game = () => {
 		setIsPaused(false);
 		setScore(0);
 		setLives(PLAYER_LIVES_NUMBER);
-		// Setting up start walls
 		setWalls(walls => {
 			walls = [];
 			for (let i = 1; i <= WALLS_NUMBER; i++) {
@@ -86,15 +85,13 @@ const Game = () => {
 	}, [setWalls, loop, setIsPaused, setLives]);
 
 	useEffect(() => {
-		// Incrementing the total shift from the beginning,
-		// used only to increment the score
 		shift.current += SHIFT_INCREMENT_PX;
 		if (shift.current % WALLS_SPACE_PX === 0 && lives > 0) {
 			setScore(score + 1);
 		}
 
 		// Handling infinite generation
-		const maxWallsOnScreen = Math.round(
+		const maxWallsOnScreen: number = Math.round(
 			window.screen.width / (WALLS_SPACE_PX + WALL_WIDTH_PX)
 		);
 		if (
