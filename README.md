@@ -30,3 +30,5 @@
 - Install the npm tool if you don't have it yet
 
 - Run the command `npm i && npm start`
+
+- Or see deployments : https://github.com/hupiat/RocketGame/deployments
