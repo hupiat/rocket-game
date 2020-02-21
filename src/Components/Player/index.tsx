@@ -1,4 +1,4 @@
-import React, { CSSProperties } from "react";
+import React, { CSSProperties, useRef, useEffect } from "react";
 import Sound from "react-sound";
 import "./Player.css";
 import HitSound from "./assets/HitSound.mp3";
@@ -23,7 +23,17 @@ interface IProps {
 }
 
 const Player = ({ isBlinking }: IProps) => {
-	const { playerPosition } = usePlayerContext();
+	// We need to store this in a ref to avoid loop sound playing since
+	// the component is re-rendered each time the player is moving
+	const shouldPlaySound = useRef<boolean>(true);
+
+	const { playerPosition, lives } = usePlayerContext();
+
+	useEffect(() => {
+		if (!isBlinking) {
+			shouldPlaySound.current = true;
+		}
+	}, [isBlinking]);
 
 	return (
 		<>
@@ -31,7 +41,7 @@ const Player = ({ isBlinking }: IProps) => {
 				src={RocketImage}
 				style={{
 					...style,
-					animation: isBlinking ? "blink 1s linear infinite" : "",
+					animation: isBlinking || lives <= 0 ? "blink 1s linear infinite" : "",
 					top: `${playerPosition}px`
 				}}
 				alt="rocket"
@@ -39,8 +49,10 @@ const Player = ({ isBlinking }: IProps) => {
 
 			<Sound
 				url={HitSound}
-				playStatus={isBlinking ? "PLAYING" : "STOPPED"}
-				loop={false}
+				playStatus={
+					isBlinking && shouldPlaySound.current ? "PLAYING" : "STOPPED"
+				}
+				onFinishedPlaying={() => (shouldPlaySound.current = false)}
 			/>
 		</>
 	);

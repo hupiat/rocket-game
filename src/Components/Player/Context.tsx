@@ -22,8 +22,8 @@ interface IPlayerContext {
 	livesRef: MutableRefObject<number>;
 	lives: number;
 	setLives: (lives: number) => void;
-	isLosingLives: boolean;
-	setIsLosingLives: (isLosingLives: boolean) => void;
+	losingLifeTimeout: NodeJS.Timeout | undefined;
+	setLosingLifeTimeout: (callback: NodeJS.Timeout | undefined) => void;
 }
 
 const SetupPlayerContext = React.createContext<IPlayerContext | undefined>(
@@ -37,7 +37,9 @@ interface IProps {
 const PlayerContext = ({ children }: IProps) => {
 	const [playerPosition, setplayerPosition] = useState<number>(0);
 	const [lives, setLivesState] = useState<number>(PLAYER_LIVES_NUMBER);
-	const [isLosingLives, setIsLosingLives] = useState<boolean>(false);
+	const [losingLifeTimeout, setLosingLifeTimeout] = useState<
+		NodeJS.Timeout | undefined
+	>();
 	const livesRef = useRef<number>(PLAYER_LIVES_NUMBER);
 
 	const move = useCallback(
@@ -81,8 +83,8 @@ const PlayerContext = ({ children }: IProps) => {
 				livesRef,
 				lives,
 				setLives,
-				isLosingLives,
-				setIsLosingLives
+				losingLifeTimeout,
+				setLosingLifeTimeout
 			}}
 		>
 			{children}

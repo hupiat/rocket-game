@@ -13,7 +13,6 @@ import Background from "./assets/Background.png";
 import Music from "./assets/Music.mp3";
 import {
 	PLAYER_LIVES_NUMBER,
-	WALL_WIDTH_PX,
 	PLAYER_IMMUNE_TIME_MS
 } from "../../Commons/DefaultValues";
 import { IWallValues, generateWall } from "../Wall/Generation";
@@ -32,8 +31,8 @@ const style: CSSProperties = {
 // the walls, representing the space between each one
 export const WALLS_SPACE_PX = 100;
 
-// Number of generated walls at the beginning
-const WALLS_NUMBER = 20;
+// Number of active walls at the same time
+const WALLS_NUMBER = 15;
 
 // Value in px representing the walls shift at each iteration
 const SHIFT_INCREMENT_PX = 5;
@@ -51,9 +50,10 @@ const Game = () => {
 	const {
 		lives,
 		livesRef,
-		isLosingLives,
+		losingLifeTimeout,
+		setLosingLifeTimeout,
 		setLives,
-		setIsLosingLives
+		playerPosition
 	} = usePlayerContext();
 
 	const loop = useCallback((): void => {
@@ -86,48 +86,44 @@ const Game = () => {
 
 	useEffect(() => {
 		shift.current += SHIFT_INCREMENT_PX;
-		if (shift.current % WALLS_SPACE_PX === 0 && lives > 0) {
+		if (shift.current % WALLS_SPACE_PX === 0) {
 			setScore(score + 1);
 		}
+		// It would be a circular dependency with score
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [walls]);
 
-		// Handling infinite generation
-		const maxWallsOnScreen: number = Math.round(
-			window.screen.width / (WALLS_SPACE_PX + WALL_WIDTH_PX)
-		);
-		if (
-			shift.current % WALLS_SPACE_PX === 0 &&
-			score > WALLS_NUMBER - maxWallsOnScreen &&
-			lives > 0
-		) {
+	// Handling infinite generation
+	useEffect(() => {
+		if (shift.current % WALLS_SPACE_PX === 0 && score > WALLS_NUMBER - 1) {
 			setWalls(walls => {
-				if (walls.length > WALLS_NUMBER) {
+				if (walls.length > WALLS_NUMBER + 1) {
 					walls.shift();
 				}
 				walls.push(generateWall(WALLS_NUMBER));
 				return walls;
 			});
 		}
-	}, [walls, score, setLives, lives]);
+		// We don't want this function be triggered unless the walls
+		// are moving, otherwise it would generate too many ones
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [walls]);
 
 	// Checking collisions
 	useEffect(() => {
-		if (walls.some(isKnockingWall) && !isLosingLives && !isPaused) {
+		if (
+			walls.some(isKnockingWall) &&
+			!isPaused &&
+			losingLifeTimeout === undefined
+		) {
 			setLives(lives - 1);
-			setIsLosingLives(true);
+			setLosingLifeTimeout(
+				setTimeout(() => setLosingLifeTimeout(undefined), PLAYER_IMMUNE_TIME_MS)
+			);
 		}
-	}, [
-		walls,
-		isKnockingWall,
-		isLosingLives,
-		isPaused,
-		lives,
-		setLives,
-		setIsLosingLives
-	]);
-
-	useEffect(() => {
-		setTimeout(() => setIsLosingLives(false), PLAYER_IMMUNE_TIME_MS);
-	}, [lives, setIsLosingLives]);
+		// We just want to check collisions when elements are moving
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [walls, playerPosition]);
 
 	useEffect(start, []);
 
@@ -143,7 +139,7 @@ const Game = () => {
 				<Wall key={i} {...wall} />
 			))}
 
-			<Player isBlinking={isLosingLives} />
+			<Player isBlinking={!!losingLifeTimeout} />
 
 			<HUD
 				lives={lives}
