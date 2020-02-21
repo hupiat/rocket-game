@@ -14,8 +14,7 @@ const scoreStyle: CSSProperties = {
 	zIndex: 10,
 	color: "white",
 	fontSize: "150%",
-	bottom: "0px",
-	right: "10px"
+	left: "10px"
 };
 
 const menuStyle: CSSProperties = {
