@@ -23,6 +23,7 @@ import { useCollisions } from "./Collisions";
 import { usePlayerContext } from "../Player/Context";
 
 const containerStyle: CSSProperties = {
+	display: "flex",
 	height: "100vh",
 	width: "100vw",
 	backgroundImage: `url(${Background})`
@@ -32,7 +33,7 @@ const soundImageStyle: CSSProperties = {
 	position: "absolute",
 	width: "300px",
 	left: "100px",
-	zIndex: 1
+	zIndex: 100
 };
 
 // Value in px used to multiply the index when generating

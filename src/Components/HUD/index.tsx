@@ -3,18 +3,19 @@ import HeartImage from "./assets/Heart.png";
 
 const heartStyle: CSSProperties = {
 	position: "relative",
-	zIndex: 10,
+	zIndex: 1,
 	width: "50px",
-	height: "50px"
+	height: "50px",
+	alignSelf: "flex-end"
 };
 
 const scoreStyle: CSSProperties = {
 	position: "absolute",
 	zIndex: 10,
 	color: "white",
-	left: "95vw",
-	top: "1vh",
-	fontSize: "150%"
+	fontSize: "150%",
+	bottom: "0px",
+	right: "10px"
 };
 
 const menuStyle: CSSProperties = {
