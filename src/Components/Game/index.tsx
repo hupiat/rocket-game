@@ -10,6 +10,7 @@ import Player from "../Player";
 import Wall from "../Wall";
 import HUD from "../HUD";
 import Background from "./assets/Background.png";
+import SoundImage from "./assets/Sound.png";
 import Music from "./assets/Music.mp3";
 import {
 	PLAYER_LIVES_NUMBER,
@@ -21,10 +22,17 @@ import { useGameKeysListener } from "./KeysListener";
 import { useCollisions } from "./Collisions";
 import { usePlayerContext } from "../Player/Context";
 
-const style: CSSProperties = {
+const containerStyle: CSSProperties = {
 	height: "100vh",
 	width: "100vw",
 	backgroundImage: `url(${Background})`
+};
+
+const soundImageStyle: CSSProperties = {
+	position: "absolute",
+	width: "300px",
+	left: "100px",
+	zIndex: 1
 };
 
 // Value in px used to multiply the index when generating
@@ -130,11 +138,13 @@ const Game = () => {
 	return (
 		<div
 			tabIndex={1}
-			style={style}
+			style={containerStyle}
 			onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) =>
 				handleKeyPress(e, loop)
 			}
 		>
+			<img src={SoundImage} alt="sound enabling logo" style={soundImageStyle} />
+
 			{walls.map((wall, i) => (
 				<Wall key={i} {...wall} />
 			))}
