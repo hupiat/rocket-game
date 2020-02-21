@@ -20,7 +20,7 @@ const Wall = ({ length, leftPosition, direction }: IProps) => {
 			left: `${leftPosition}px`
 		};
 
-		const shift = i * 50;
+		const shift = i * WALL_HEIGHT_PX;
 
 		if (direction === Direction.TOP) {
 			style.top = `${shift}px`;
