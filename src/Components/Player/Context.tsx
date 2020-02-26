@@ -13,12 +13,12 @@ import {
 	PLAYER_HEIGHT_PX
 } from "../../Commons/DefaultValues";
 
-const KEY_PRESS_VALUE_PX = 20;
+const PLAYER_MOVE_VALUE_PX: number = 20;
 
 interface IPlayerContext {
 	playerPosition: number;
 	playerKeysListener: (e: React.KeyboardEvent) => void;
-	// We need a ref to be listened in the loop timeout
+	// We need a ref to be listened in the loop callback
 	livesRef: MutableRefObject<number>;
 	lives: number;
 	setLives: (lives: number) => void;
@@ -35,7 +35,7 @@ interface IProps {
 }
 
 const PlayerContext = ({ children }: IProps) => {
-	const [playerPosition, setplayerPosition] = useState<number>(0);
+	const [playerPosition, setPlayerPosition] = useState<number>(0);
 	const [lives, setLivesState] = useState<number>(PLAYER_LIVES_NUMBER);
 	const [losingLifeTimeout, setLosingLifeTimeout] = useState<
 		NodeJS.Timeout | undefined
@@ -44,22 +44,24 @@ const PlayerContext = ({ children }: IProps) => {
 
 	const move = useCallback(
 		(direction: Direction): void => {
-			if (direction === Direction.TOP && playerPosition >= KEY_PRESS_VALUE_PX) {
-				setplayerPosition(playerPosition - KEY_PRESS_VALUE_PX);
+			if (
+				direction === Direction.TOP &&
+				playerPosition >= PLAYER_MOVE_VALUE_PX
+			) {
+				setPlayerPosition(playerPosition - PLAYER_MOVE_VALUE_PX);
 			}
 			if (
 				direction === Direction.BOTTOM &&
-				// Window height - rocket height (px)
 				playerPosition <= window.innerHeight - PLAYER_HEIGHT_PX
 			) {
-				setplayerPosition(playerPosition + KEY_PRESS_VALUE_PX);
+				setPlayerPosition(playerPosition + PLAYER_MOVE_VALUE_PX);
 			}
 		},
-		[playerPosition, setplayerPosition]
+		[playerPosition, setPlayerPosition]
 	);
 
 	const playerKeysListener = useCallback(
-		(e: React.KeyboardEvent): void => {
+		(e: React.KeyboardEvent) => {
 			if (e.keyCode === ARROW_UP) {
 				move(Direction.TOP);
 			}
@@ -70,7 +72,7 @@ const PlayerContext = ({ children }: IProps) => {
 		[move]
 	);
 
-	const setLives = (lives: number) => {
+	const setLives = (lives: number): void => {
 		livesRef.current = lives;
 		setLivesState(lives);
 	};

@@ -20,7 +20,7 @@ const Wall = ({ length, leftPosition, direction }: IProps) => {
 			left: `${leftPosition}px`
 		};
 
-		const shift = i * WALL_HEIGHT_PX;
+		const shift: number = i * WALL_HEIGHT_PX;
 
 		if (direction === Direction.TOP) {
 			style.top = `${shift}px`;
@@ -29,7 +29,7 @@ const Wall = ({ length, leftPosition, direction }: IProps) => {
 			style.top = `calc(95vh - ${shift}px)`;
 		}
 
-		blocks.push(<img src={WallImage} alt={"Wall"} style={style} key={i} />);
+		blocks.push(<img src={WallImage} alt="wall" style={style} key={i} />);
 	}
 
 	return <>{blocks}</>;

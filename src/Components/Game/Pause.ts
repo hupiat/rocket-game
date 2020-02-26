@@ -1,7 +1,7 @@
 import { useRef, useState, MutableRefObject } from "react";
 
 interface IPauseValues {
-	// We need a ref to be listened in the loop timeout
+	// We need a ref to be listened in the loop callback
 	pauseRef: MutableRefObject<boolean>;
 	isPaused: boolean;
 	setIsPaused: (isPaused: boolean) => void;

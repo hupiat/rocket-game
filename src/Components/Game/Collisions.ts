@@ -16,8 +16,8 @@ export const useCollisions = (): ICollisionsValues => {
 	const { playerPosition } = usePlayerContext();
 
 	const isKnockingWallVertically = (wall: IWallValues): boolean => {
-		const wallPxHeight = wall.length * WALL_HEIGHT_PX;
-		const playerPxHeight = playerPosition + PLAYER_HEIGHT_PX / 2;
+		const wallPxHeight: number = wall.length * WALL_HEIGHT_PX;
+		const playerPxHeight: number = playerPosition + PLAYER_HEIGHT_PX / 2;
 
 		if (wall.direction === Direction.TOP) {
 			return wallPxHeight >= playerPxHeight;

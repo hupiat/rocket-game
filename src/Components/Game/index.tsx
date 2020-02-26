@@ -38,16 +38,16 @@ const soundImageStyle: CSSProperties = {
 
 // Value in px used to multiply the index when generating
 // the walls, representing the space between each one
-export const WALLS_SPACE_PX = 100;
+export const WALLS_SPACE_PX: number = 100;
 
 // Number of active walls at the same time
-const WALLS_NUMBER = 15;
+const WALLS_NUMBER: number = 15;
 
 // Value in px representing the walls shift at each iteration
-const SHIFT_INCREMENT_PX = 5;
+const SHIFT_INCREMENT_PX: number = 5;
 
 // Value in ms representing the time between each iteration
-const LOOP_INCREMENT_MS = 20;
+const LOOP_INCREMENT_MS: number = 20;
 
 const Game = () => {
 	const [walls, setWalls] = useState<IWallValues[]>([]);
@@ -65,7 +65,7 @@ const Game = () => {
 		playerPosition
 	} = usePlayerContext();
 
-	const loop = useCallback((): void => {
+	const loop = useCallback(() => {
 		if (!pauseRef.current && livesRef.current > 0) {
 			// Moving the walls to the left
 			setWalls(walls =>
@@ -78,7 +78,7 @@ const Game = () => {
 		}
 	}, [setWalls, pauseRef, livesRef]);
 
-	const start = useCallback((): void => {
+	const start = useCallback(() => {
 		shift.current = 0;
 		setIsPaused(false);
 		setScore(0);

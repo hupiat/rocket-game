@@ -16,9 +16,9 @@ export const useGameKeysListener = (
 	const { playerKeysListener, lives } = usePlayerContext();
 
 	const handleKeyPress = useCallback(
-		(e: React.KeyboardEvent<HTMLDivElement>, loop: () => void): void => {
+		(e: React.KeyboardEvent<HTMLDivElement>, loop: () => void) => {
 			if (e.keyCode === ESCAPE && lives > 0) {
-				const wasPaused = isPaused;
+				const wasPaused: boolean = isPaused;
 				setIsPaused(!isPaused);
 				if (wasPaused) {
 					loop();
