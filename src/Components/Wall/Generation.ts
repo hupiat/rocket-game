@@ -10,39 +10,47 @@ let previousLength: number;
 let previousDirection: number;
 
 export interface IWallValues {
-	length: number;
-	leftPosition: number;
-	direction: Direction;
+  length: number;
+  leftPosition: number;
+  direction: Direction;
 }
 
-export const generateWall = (index: number): IWallValues => {
-	let length: number = Math.floor(
-		Math.random() * (WALL_BLOCKS_MAX_LENGTH - 1) + 1
-	);
+const useGenerationTolerance = (
+  direction: Direction,
+  length: number
+): number => {
+  if (GENERATION_TOLERANCE > 0) {
+    if (previousDirection !== direction) {
+      while (
+        Math.abs(previousLength - length) < GENERATION_TOLERANCE &&
+        length > 1
+      ) {
+        length--;
+      }
+    }
+    previousLength = length;
+    previousDirection = direction;
+  }
+  return length;
+};
 
-	const randomIdx: number = Math.floor(Math.random() * Math.floor(2));
+export const useWallGeneration = (): ((index: number) => IWallValues) => {
+  const randomIdx: number = Math.floor(Math.random() * Math.floor(2));
+  const direction: number =
+    randomIdx % 2 === 0 ? Direction.TOP : Direction.BOTTOM;
 
-	const direction: number =
-		randomIdx % 2 === 0 ? Direction.TOP : Direction.BOTTOM;
+  let length: number = Math.floor(
+    Math.random() * (WALL_BLOCKS_MAX_LENGTH - 1) + 1
+  );
+  length = useGenerationTolerance(direction, length);
 
-	if (GENERATION_TOLERANCE > 0) {
-		if (previousDirection !== direction) {
-			while (
-				Math.abs(previousLength - length) < GENERATION_TOLERANCE &&
-				length > 1
-			) {
-				length--;
-			}
-		}
-		previousLength = length;
-		previousDirection = direction;
-	}
+  return (index: number) => {
+    const leftPosition: number = index * WALLS_SPACE_PX;
 
-	const leftPosition: number = index * WALLS_SPACE_PX;
-
-	return {
-		length,
-		direction,
-		leftPosition
-	};
+    return {
+      length,
+      direction,
+      leftPosition
+    };
+  };
 };
