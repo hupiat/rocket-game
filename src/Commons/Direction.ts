@@ -1,4 +1,1 @@
-export enum Direction {
-	TOP,
-	BOTTOM
-}
+export type Direction = 'top' | 'bottom';

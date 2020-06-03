@@ -1,36 +1,54 @@
-import { usePlayerContext } from "../Player/Context";
-import { IWallValues } from "../Wall/Generation";
-import { Direction } from "../../Commons/Direction";
+import { usePlayerContext } from '../Player/Context';
+import { IWallValues } from '../Wall/Generation';
 import {
-  PLAYER_HEIGHT_PX,
-  WALL_HEIGHT_PX,
-  PLAYER_LEFT_POSITION_PX,
-  PLAYER_WIDTH_PX
-} from "../../Commons/DefaultValues";
+	PLAYER_HEIGHT_PX,
+	WALL_HEIGHT_PX,
+	PLAYER_WIDTH_PX,
+} from '../../Commons/DefaultValues';
+import { useCallback } from 'react';
+import { PLAYER_LEFT_POSITION_PX } from '../Player';
 
-export const useCollisions = (): ((wall: IWallValues) => boolean) => {
-  const { playerPosition } = usePlayerContext();
+export const useCollisions = (): ((walls: IWallValues[]) => boolean) => {
+	const { playerPosition } = usePlayerContext();
 
-  const isKnockingWallVertically = (wall: IWallValues): boolean => {
-    const wallPxHeight: number = wall.length * WALL_HEIGHT_PX;
-    const playerPxHeight: number = playerPosition + PLAYER_HEIGHT_PX / 2;
+	const isKnockingWallVertically = useCallback(
+		(wall: IWallValues): boolean => {
+			const wallPxHeight: number = wall.length * WALL_HEIGHT_PX;
+			const playerPxHeight: number = playerPosition + PLAYER_HEIGHT_PX / 2;
 
-    if (wall.direction === Direction.TOP) {
-      return wallPxHeight >= playerPxHeight;
-    }
-    if (wall.direction === Direction.BOTTOM) {
-      return window.innerHeight - wallPxHeight <= playerPxHeight;
-    }
+			if (wall.direction === 'top') {
+				return wallPxHeight >= playerPxHeight;
+			}
+			if (wall.direction === 'bottom') {
+				return window.innerHeight - wallPxHeight <= playerPxHeight;
+			}
 
-    return false;
-  };
+			return false;
+		},
+		[playerPosition]
+	);
 
-  const isKnockingWallHorizontally = (wall: IWallValues): boolean =>
-    wall.leftPosition > PLAYER_LEFT_POSITION_PX - PLAYER_WIDTH_PX / 2 &&
-    wall.leftPosition < PLAYER_LEFT_POSITION_PX + PLAYER_WIDTH_PX / 2;
+	const isKnockingWallHorizontally = useCallback(
+		(wall: IWallValues): boolean =>
+			wall.leftPosition > PLAYER_LEFT_POSITION_PX - PLAYER_WIDTH_PX / 2 &&
+			wall.leftPosition < PLAYER_LEFT_POSITION_PX + PLAYER_WIDTH_PX / 2,
+		[]
+	);
 
-  const isKnockingWall = (wall: IWallValues): boolean =>
-    isKnockingWallHorizontally(wall) && isKnockingWallVertically(wall);
+	const isKnockingWall = useCallback(
+		(walls: IWallValues[]): boolean => {
+			// We make a local search on the first walls
+			// (the previous, maybe hidden, the actual, and the next one)
+			for (let i = 0; i < 3; i++) {
+				if (isKnockingWallHorizontally(walls[i]) && isKnockingWallVertically(walls[i])) {
+					return true;
+				}
+			}
 
-  return isKnockingWall;
+			return false;
+		},
+		[isKnockingWallHorizontally, isKnockingWallVertically]
+	);
+
+	return isKnockingWall;
 };

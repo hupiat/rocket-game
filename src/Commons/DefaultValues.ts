@@ -12,4 +12,6 @@ export const PLAYER_WIDTH_PX = 100;
 
 export const PLAYER_HEIGHT_PX = 100;
 
-export const PLAYER_LEFT_POSITION_PX = 20;
+export const PLAYER_MOVE_VALUE_PX = 20;
+
+export const PLAYER_MOVE_REST_DELAY_MS = 200;
