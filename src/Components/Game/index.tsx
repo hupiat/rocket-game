@@ -12,6 +12,7 @@ import { usePause } from './Pause';
 import { useGameKeysListener } from './KeysListener';
 import { useCollisions } from './Collisions';
 import { usePlayerContext } from '../Player/Context';
+import { AI_NEAT_BOT, useNeatBotContext } from '../../AI_NEAT_BOT/Context';
 
 const containerStyle: CSSProperties = {
 	display: 'flex',
@@ -42,10 +43,11 @@ const SHIFT_INCREMENT_PX: number = 5;
 
 const Game = () => {
 	const [walls, setWalls] = useState<IWallValues[]>([]);
-	const [score, setScore] = useState<number>(0);
 	const shift = useRef<number>(0);
 	const { isPaused, setIsPaused, pauseRef } = usePause();
 	const {
+		score,
+		setScore,
 		lives,
 		livesRef,
 		losingLifeTimeout,
@@ -56,20 +58,25 @@ const Game = () => {
 		setPlayerPosition,
 		isMoving,
 	} = usePlayerContext();
+	const { ask_model, step_generation } = useNeatBotContext();
+	const { moveRocket, handleKeyPress } = useGameKeysListener(isPaused, setIsPaused);
 	const isKnockingWall = useCollisions();
 	const generateWall = useWallGeneration();
-	const handleKeyPress = useGameKeysListener(isPaused, setIsPaused);
 
 	const loop = useCallback(() => {
-		if (!pauseRef.current && livesRef.current > 0) {
-			// Moving the walls to the left
-			setWalls((walls) =>
-				walls.map((wall) => {
-					wall.leftPosition = wall.leftPosition - SHIFT_INCREMENT_PX;
-					return wall;
-				})
-			);
-			!isMoving.current && setPlayerPosition(playerPositionRef.current + 1);
+		// Moving the walls to the left
+		setWalls((walls) =>
+			walls.map((wall) => {
+				wall.leftPosition = wall.leftPosition - SHIFT_INCREMENT_PX;
+				return wall;
+			})
+		);
+		if (!pauseRef.current && livesRef.current.every((l) => l > 0)) {
+			playerPositionRef.current.forEach((pos, i) => {
+				if (!isMoving.current[i]) {
+					setPlayerPosition(i, pos + 1.3);
+				}
+			});
 			setTimeout(loop, LOOP_INCREMENT_MS);
 		}
 	}, [setWalls, setPlayerPosition, pauseRef, livesRef, playerPositionRef, isMoving]);
@@ -77,17 +84,40 @@ const Game = () => {
 	const start = useCallback(() => {
 		shift.current = 0;
 		setIsPaused(false);
-		setScore(0);
-		setLives(PLAYER_LIVES_NUMBER);
+		score.forEach((_, i) => setScore(i, 0));
+		playerPosition.forEach((_, i) => setLives(i, PLAYER_LIVES_NUMBER));
+		AI_NEAT_BOT && step_generation(score, playerPosition, walls[walls.length - 1]);
 		loop();
-	}, [loop, setIsPaused, setLives]);
+	}, [
+		loop,
+		score,
+		setScore,
+		setIsPaused,
+		setLives,
+		playerPosition,
+		step_generation,
+		walls,
+	]);
 
 	useEffect(() => {
 		shift.current += SHIFT_INCREMENT_PX;
 		if (shift.current % WALLS_SPACE_PX === 0 && walls.length >= WALLS_NUMBER) {
-			setScore((score) => score + 1);
+			score.forEach((_, i) => setScore(i, score[i] + 1));
 		}
-	}, [walls]);
+	}, [walls, score, setScore]);
+
+	// Handling bots
+	useEffect(() => {
+		if (AI_NEAT_BOT) {
+			ask_model(score, playerPosition, walls[walls.length - 1]).then((predictions) =>
+				predictions.forEach((prediction, i) => {
+					if (prediction) {
+						moveRocket(i);
+					}
+				})
+			);
+		}
+	}, [ask_model, score, playerPosition, walls, moveRocket]);
 
 	// Handling infinite generation
 	useEffect(() => {
@@ -107,17 +137,20 @@ const Game = () => {
 
 	// Checking collisions
 	useEffect(() => {
-		if (
-			!isPaused &&
-			losingLifeTimeout === undefined &&
-			score > 0 &&
-			isKnockingWall(walls)
-		) {
-			setLives(lives - 1);
-			setLosingLifeTimeout(
-				setTimeout(() => setLosingLifeTimeout(undefined), PLAYER_IMMUNE_TIME_MS)
-			);
-		}
+		playerPosition.forEach((_, i) => {
+			if (
+				!isPaused &&
+				losingLifeTimeout[i] === undefined &&
+				score[i] > 0 &&
+				isKnockingWall(i, walls)
+			) {
+				setLosingLifeTimeout(
+					i,
+					setTimeout(() => setLosingLifeTimeout(i, undefined), PLAYER_IMMUNE_TIME_MS)
+				);
+				setLives(i, lives[i] - 1);
+			}
+		});
 		// We just want to check collisions when elements are moving
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [walls, playerPosition]);
@@ -128,7 +161,9 @@ const Game = () => {
 		<div
 			tabIndex={1}
 			style={containerStyle}
-			onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => handleKeyPress(e, loop)}
+			onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) =>
+				!AI_NEAT_BOT && handleKeyPress(0, e, loop)
+			}
 		>
 			<img src={SoundImage} alt='sound enabling logo' style={soundImageStyle} />
 
@@ -136,15 +171,11 @@ const Game = () => {
 				<Wall key={i} {...wall} />
 			))}
 
-			<Player isBlinking={!!losingLifeTimeout} />
+			{playerPosition.map((_, i) => (
+				<Player isBlinking={!!losingLifeTimeout[i]} index={i} key={i} />
+			))}
 
-			<HUD
-				lives={lives}
-				score={score}
-				isMenuEnabled={isPaused}
-				isRetryMenuEnabled={lives <= 0}
-				onRetry={start}
-			/>
+			<HUD onRetry={start} isPaused={isPaused} />
 
 			<Sound url={Music} playStatus='PLAYING' />
 		</div>

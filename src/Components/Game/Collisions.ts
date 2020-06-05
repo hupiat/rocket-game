@@ -8,13 +8,13 @@ import {
 import { useCallback } from 'react';
 import { PLAYER_LEFT_POSITION_PX } from '../Player';
 
-export const useCollisions = (): ((walls: IWallValues[]) => boolean) => {
+export const useCollisions = (): ((index: number, walls: IWallValues[]) => boolean) => {
 	const { playerPosition } = usePlayerContext();
 
 	const isKnockingWallVertically = useCallback(
-		(wall: IWallValues): boolean => {
+		(index: number, wall: IWallValues): boolean => {
 			const wallPxHeight: number = wall.length * WALL_HEIGHT_PX;
-			const playerPxHeight: number = playerPosition + PLAYER_HEIGHT_PX / 2;
+			const playerPxHeight: number = playerPosition[index] + PLAYER_HEIGHT_PX / 2;
 
 			if (wall.direction === 'top') {
 				return wallPxHeight >= playerPxHeight;
@@ -36,11 +36,14 @@ export const useCollisions = (): ((walls: IWallValues[]) => boolean) => {
 	);
 
 	const isKnockingWall = useCallback(
-		(walls: IWallValues[]): boolean => {
+		(index: number, walls: IWallValues[]): boolean => {
 			// We make a local search on the first walls
 			// (the previous, maybe hidden, the actual, and the next one)
 			for (let i = 0; i < 3; i++) {
-				if (isKnockingWallHorizontally(walls[i]) && isKnockingWallVertically(walls[i])) {
+				if (
+					isKnockingWallHorizontally(walls[i]) &&
+					isKnockingWallVertically(index, walls[i])
+				) {
 					return true;
 				}
 			}

@@ -1,17 +1,20 @@
 import { useState, useContext, useRef, MutableRefObject } from 'react';
 import React from 'react';
 import { PLAYER_LIVES_NUMBER } from '../../Commons/DefaultValues';
+import { useNeatBotContext, AI_NEAT_BOT } from '../../AI_NEAT_BOT/Context';
 
 interface IPlayerContext {
-	playerPosition: number;
-	setPlayerPosition: (position: number) => void;
-	playerPositionRef: MutableRefObject<number>;
-	lives: number;
-	setLives: (lives: number) => void;
-	livesRef: MutableRefObject<number>;
-	losingLifeTimeout: NodeJS.Timeout | undefined;
-	setLosingLifeTimeout: (callback: NodeJS.Timeout | undefined) => void;
-	isMoving: MutableRefObject<boolean>;
+	score: number[];
+	setScore: (index: number, score: number) => void;
+	playerPosition: number[];
+	setPlayerPosition: (index: number, position: number) => void;
+	playerPositionRef: MutableRefObject<number[]>;
+	lives: number[];
+	setLives: (index: number, lives: number) => void;
+	livesRef: MutableRefObject<number[]>;
+	losingLifeTimeout: Array<NodeJS.Timeout | undefined>;
+	setLosingLifeTimeout: (index: number, callback: NodeJS.Timeout | undefined) => void;
+	isMoving: MutableRefObject<boolean[]>;
 }
 
 const SetupPlayerContext = React.createContext<IPlayerContext | undefined>(undefined);
@@ -21,30 +24,60 @@ interface IProps {
 }
 
 const PlayerContext = ({ children }: IProps) => {
-	const [playerPosition, setPlayerPositionState] = useState<number>(
-		window.innerHeight / 2
+	const { count_generation } = useNeatBotContext();
+	function init<T>(value: T): T[] {
+		return [...Array(AI_NEAT_BOT ? count_generation : 1)].map(() => value);
+	}
+	const [score, setScoreState] = useState<number[]>(init(0));
+	const [playerPosition, setPlayerPositionState] = useState<number[]>(
+		init(window.innerHeight / 2)
 	);
-	const [lives, setLivesState] = useState<number>(PLAYER_LIVES_NUMBER);
-	const [losingLifeTimeout, setLosingLifeTimeout] = useState<
-		NodeJS.Timeout | undefined
-	>();
-	const livesRef = useRef<number>(PLAYER_LIVES_NUMBER);
-	const playerPositionRef = useRef<number>(playerPosition);
-	const isMoving = useRef<boolean>(false);
+	const [lives, setLivesState] = useState<number[]>(init(PLAYER_LIVES_NUMBER));
+	const [losingLifeTimeout, setLosingLifeTimeoutState] = useState<
+		Array<NodeJS.Timeout | undefined>
+	>(init(undefined));
+	const livesRef = useRef<number[]>(init(PLAYER_LIVES_NUMBER));
+	const playerPositionRef = useRef<number[]>(playerPosition);
+	const isMoving = useRef<boolean[]>(init(false));
 
-	const setLives = (lives: number): void => {
-		livesRef.current = lives;
-		setLivesState(lives);
+	const setScore = (index: number, score: number) =>
+		setScoreState((scoreState) => {
+			scoreState[index] = score;
+			return scoreState;
+		});
+
+	const setLives = (index: number, lives: number): void => {
+		livesRef.current[index] = lives;
+		setLivesState((livesState) => {
+			livesState[index] = lives;
+			return livesState;
+		});
 	};
 
-	const setPlayerPosition = (position: number): void => {
-		playerPositionRef.current = position;
-		setPlayerPositionState(position);
+	const setPlayerPosition = (index: number, position: number): void => {
+		if (position < 1080) {
+			playerPositionRef.current[index] = position;
+			setPlayerPositionState((positionState) => {
+				positionState[index] = position;
+				return positionState;
+			});
+		}
 	};
+
+	const setLosingLifeTimeout = (
+		index: number,
+		losingLifeTimeout?: NodeJS.Timeout
+	): void =>
+		setLosingLifeTimeoutState((losingLifeTimeoutState) => {
+			losingLifeTimeoutState[index] = losingLifeTimeout;
+			return losingLifeTimeoutState;
+		});
 
 	return (
 		<SetupPlayerContext.Provider
 			value={{
+				score,
+				setScore,
 				playerPositionRef,
 				playerPosition,
 				setPlayerPosition,

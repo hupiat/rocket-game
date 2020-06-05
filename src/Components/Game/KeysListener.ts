@@ -6,28 +6,47 @@ import {
 	PLAYER_MOVE_REST_DELAY_MS,
 } from '../../Commons/DefaultValues';
 
+export interface IKeysListener {
+	moveRocket: (index: number) => void;
+	handleKeyPress: (
+		index: number,
+		e: React.KeyboardEvent<HTMLDivElement>,
+		loop: () => void
+	) => void;
+}
+
 export const useGameKeysListener = (
 	isPaused: boolean,
 	setIsPaused: (isPaused: boolean) => void
-): ((e: React.KeyboardEvent<HTMLDivElement>, loop: () => void) => void) => {
+): IKeysListener => {
 	const { playerPosition, setPlayerPosition, lives, isMoving } = usePlayerContext();
 
+	const moveRocket = useCallback(
+		(index: number) => {
+			isMoving.current[index] = true;
+			setPlayerPosition(index, playerPosition[index] - PLAYER_MOVE_VALUE_PX);
+			setTimeout(() => (isMoving.current[index] = false), PLAYER_MOVE_REST_DELAY_MS);
+		},
+		[isMoving, playerPosition, setPlayerPosition]
+	);
+
 	const handleKeyPress = useCallback(
-		(e: React.KeyboardEvent<HTMLDivElement>, loop: () => void) => {
-			if (e.keyCode === ESCAPE && lives > 0) {
+		(index: number, e: React.KeyboardEvent<HTMLDivElement>, loop: () => void) => {
+			if (e.keyCode === ESCAPE && lives[index] > 0) {
 				const wasPaused: boolean = isPaused;
 				setIsPaused(!isPaused);
 				if (wasPaused) {
 					loop();
 				}
-			} else if (e.keyCode === ARROW_SPACE && !isPaused && lives > 0) {
-				isMoving.current = true;
-				setPlayerPosition(playerPosition - PLAYER_MOVE_VALUE_PX);
-				setTimeout(() => (isMoving.current = false), PLAYER_MOVE_REST_DELAY_MS);
+			} else if (e.keyCode === ARROW_SPACE && !isPaused && lives[index] > 0) {
+				moveRocket(index);
 			}
 		},
-		[setIsPaused, isPaused, lives, playerPosition, setPlayerPosition, isMoving]
+		[setIsPaused, isPaused, lives, moveRocket]
 	);
 
-	return handleKeyPress;
+	return {
+		moveRocket,
+		handleKeyPress,
+	};
 };

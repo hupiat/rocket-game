@@ -17,10 +17,11 @@ const style: CSSProperties = {
 };
 
 interface IProps {
-	isBlinking: boolean;
+	index: number;
+  isBlinking: boolean;
 }
 
-const Player = ({ isBlinking }: IProps) => {
+const Player = ({ index, isBlinking }: IProps) => {
 	// We need to store this in a ref to avoid loop sound playing since
 	// the component is re-rendered each time the player is moving
 	const shouldPlaySound = useRef<boolean>(true);
@@ -39,7 +40,7 @@ const Player = ({ isBlinking }: IProps) => {
 				src={RocketImage}
 				style={{
 					...style,
-					animation: isBlinking || lives <= 0 ? 'blink 1s linear infinite' : '',
+					animation: isBlinking || lives[index] <= 0 ? 'blink 1s linear infinite' : '',
 					top: `${playerPosition}px`,
 				}}
 				alt='rocket'
