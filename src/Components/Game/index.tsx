@@ -60,7 +60,7 @@ const Game = () => {
 	} = usePlayerContext();
 	const { ask_model, step_generation } = useNeatBotContext();
 	const { moveRocket, handleKeyPress } = useGameKeysListener(isPaused, setIsPaused);
-	const isKnockingWall = useCollisions();
+	const { isKnockingWall, lastWallHit, nextWallToPasse } = useCollisions();
 	const generateWall = useWallGeneration();
 
 	const loop = useCallback(() => {
@@ -71,7 +71,10 @@ const Game = () => {
 				return wall;
 			})
 		);
-		if (!pauseRef.current && livesRef.current.every((l) => l > 0)) {
+		if (
+			!pauseRef.current &&
+			(livesRef.current.some((l) => l > 0) || livesRef.current.length === 0)
+		) {
 			playerPositionRef.current.forEach((pos, i) => {
 				if (!isMoving.current[i]) {
 					setPlayerPosition(i, pos + 1.3);
@@ -86,7 +89,7 @@ const Game = () => {
 		setIsPaused(false);
 		score.forEach((_, i) => setScore(i, 0));
 		playerPosition.forEach((_, i) => setLives(i, PLAYER_LIVES_NUMBER));
-		AI_NEAT_BOT && step_generation(score, playerPosition, walls[walls.length - 1]);
+		AI_NEAT_BOT && step_generation(score, playerPosition, lastWallHit);
 		loop();
 	}, [
 		loop,
@@ -96,7 +99,7 @@ const Game = () => {
 		setLives,
 		playerPosition,
 		step_generation,
-		walls,
+		lastWallHit,
 	]);
 
 	useEffect(() => {
@@ -109,15 +112,15 @@ const Game = () => {
 	// Handling bots
 	useEffect(() => {
 		if (AI_NEAT_BOT) {
-      ask_model(score, playerPosition, walls[walls.length - 1]).then((predictions) => {
+			ask_model(score, playerPosition, nextWallToPasse).then((predictions) => {
 				predictions.forEach((prediction, i) => {
 					if (prediction) {
 						moveRocket(i);
 					}
-				})
-      });
+				});
+			});
 		}
-	}, [ask_model, score, playerPosition, walls, moveRocket]);
+	}, [ask_model, score, playerPosition, walls, moveRocket, nextWallToPasse]);
 
 	// Handling infinite generation
 	useEffect(() => {
@@ -138,17 +141,12 @@ const Game = () => {
 	// Checking collisions
 	useEffect(() => {
 		playerPosition.forEach((_, i) => {
-			if (
-				!isPaused &&
-				losingLifeTimeout[i] === undefined &&
-				score[i] > 0 &&
-				isKnockingWall(i, walls)
-			) {
+			if (!isPaused && losingLifeTimeout[i] === undefined && isKnockingWall(i, walls)) {
+				setLives(i, lives[i] - 1);
 				setLosingLifeTimeout(
 					i,
 					setTimeout(() => setLosingLifeTimeout(i, undefined), PLAYER_IMMUNE_TIME_MS)
 				);
-				setLives(i, lives[i] - 1);
 			}
 		});
 		// We just want to check collisions when elements are moving

@@ -1,7 +1,7 @@
-import React, { CSSProperties } from 'react';
+import React, { CSSProperties, useEffect, useRef } from 'react';
 import HeartImage from './assets/Heart.png';
 import { usePlayerContext } from '../Player/Context';
-import { AI_NEAT_BOT } from '../../AI_NEAT_BOT/Context';
+import { AI_NEAT_BOT, AI_NEAT_BOTS_AUTO_RESTART_MS, useNeatBotContext } from '../../AI_NEAT_BOT/Context';
 
 const heartStyle: CSSProperties = {
 	position: 'relative',
@@ -42,9 +42,17 @@ interface IProps {
 }
 
 const HUD = ({ onRetry, isPaused }: IProps) => {
-	const { score, lives } = usePlayerContext();
+  const neatBotAutoRestart = useRef<NodeJS.Timeout | undefined>();
+  const { score, lives } = usePlayerContext();
+  const { actual_gen_count } = useNeatBotContext();
 
-	const renderScore = (): JSX.Element => <b style={scoreStyle}>{score[0]}</b>;
+	const renderScore = (): JSX.Element =><b style={scoreStyle}>
+      {AI_NEAT_BOT ? `Gen : ${actual_gen_count}` : score[0]}
+      {AI_NEAT_BOT && <>
+      <br />
+      {`Score: ${score[0]}`}
+      </>}
+    </b>;
 
 	const renderMenu = (isRetry: boolean = false): JSX.Element => {
 		let maxScore = 0;
@@ -69,16 +77,23 @@ const HUD = ({ onRetry, isPaused }: IProps) => {
 	const renderLives = (): JSX.Element[] =>
 		[...Array(lives[0])].map((_, i) => (
 			<img src={HeartImage} key={i} alt={`heart-${i}`} style={heartStyle} />
-		));
+    ));
+    
+  useEffect(() => {
+    if (AI_NEAT_BOT && lives.length && lives.every(l => l <= 0) && !neatBotAutoRestart.current) {
+      neatBotAutoRestart.current = setTimeout(() => {
+        onRetry();
+        neatBotAutoRestart.current = undefined;
+      }, AI_NEAT_BOTS_AUTO_RESTART_MS);
+    }
+  }, [lives, onRetry])
 
 	return (
 		<>
 			{!AI_NEAT_BOT && renderLives()}
 			{!isPaused && renderScore()}
 			{isPaused && renderMenu()}
-			{AI_NEAT_BOT
-				? lives.every((l) => l <= 0) && renderMenu(true)
-				: lives[0] <= 0 && renderMenu(true)}
+			{lives.every((l) => l <= 0) && renderMenu(true)}
 		</>
 	);
 };

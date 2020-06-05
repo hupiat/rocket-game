@@ -5,6 +5,7 @@ import HitSound from './assets/HitSound.mp3';
 import RocketImage from './assets/Rocket.gif';
 import { usePlayerContext } from './Context';
 import { PLAYER_WIDTH_PX, PLAYER_HEIGHT_PX } from '../../Commons/DefaultValues';
+import { AI_NEAT_BOT } from '../../AI_NEAT_BOT/Context';
 
 export const PLAYER_LEFT_POSITION_PX = 20;
 
@@ -18,7 +19,7 @@ const style: CSSProperties = {
 
 interface IProps {
 	index: number;
-  isBlinking: boolean;
+	isBlinking: boolean;
 }
 
 const Player = ({ index, isBlinking }: IProps) => {
@@ -41,14 +42,15 @@ const Player = ({ index, isBlinking }: IProps) => {
 				style={{
 					...style,
 					animation: isBlinking || lives[index] <= 0 ? 'blink 1s linear infinite' : '',
-					top: `${playerPosition}px`,
+          top: `${playerPosition[index]}px`,
+          display: AI_NEAT_BOT ? lives[index] > 0 ? "block" : "none" : "block"
 				}}
 				alt='rocket'
 			/>
 
 			<Sound
 				url={HitSound}
-				playStatus={isBlinking && shouldPlaySound.current ? 'PLAYING' : 'STOPPED'}
+				playStatus={isBlinking && shouldPlaySound.current && !AI_NEAT_BOT ? 'PLAYING' : 'STOPPED'}
 				onFinishedPlaying={() => (shouldPlaySound.current = false)}
 			/>
 		</>
