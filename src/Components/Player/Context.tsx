@@ -1,4 +1,11 @@
-import { useState, useContext, useRef, MutableRefObject } from 'react';
+import {
+	useState,
+	useContext,
+	useRef,
+	MutableRefObject,
+	useEffect,
+	useCallback,
+} from 'react';
 import React from 'react';
 import { PLAYER_LIVES_NUMBER } from '../../Commons/DefaultValues';
 import { useNeatBotContext, AI_NEAT_BOT } from '../../AI_NEAT_BOT/Context';
@@ -25,9 +32,11 @@ interface IProps {
 
 const PlayerContext = ({ children }: IProps) => {
 	const { count_generation } = useNeatBotContext();
-	function init<T>(value: T): T[] {
-		return [...Array(AI_NEAT_BOT ? count_generation : 1)].map(() => value);
-	}
+	const init = useCallback(
+		(value: any): any[] =>
+			[...Array(AI_NEAT_BOT ? count_generation : 1)].map(() => value),
+		[count_generation]
+	);
 	const [score, setScoreState] = useState<number[]>(init(0));
 	const [playerPosition, setPlayerPositionState] = useState<number[]>(
 		init(window.innerHeight / 2)
@@ -39,6 +48,16 @@ const PlayerContext = ({ children }: IProps) => {
 	const livesRef = useRef<number[]>(init(PLAYER_LIVES_NUMBER));
 	const playerPositionRef = useRef<number[]>(playerPosition);
 	const isMoving = useRef<boolean[]>(init(false));
+
+	useEffect(() => {
+		setScoreState(init(0));
+		setLivesState(init(PLAYER_LIVES_NUMBER));
+		setLosingLifeTimeoutState(init(undefined));
+		livesRef.current = init(PLAYER_LIVES_NUMBER);
+		playerPositionRef.current = init(window.innerHeight / 2);
+		setPlayerPositionState(playerPositionRef.current);
+		isMoving.current = init(false);
+	}, [count_generation, init]);
 
 	const setScore = (index: number, score: number) =>
 		setScoreState((scoreState) => {

@@ -109,13 +109,13 @@ const Game = () => {
 	// Handling bots
 	useEffect(() => {
 		if (AI_NEAT_BOT) {
-			ask_model(score, playerPosition, walls[walls.length - 1]).then((predictions) =>
+      ask_model(score, playerPosition, walls[walls.length - 1]).then((predictions) => {
 				predictions.forEach((prediction, i) => {
 					if (prediction) {
 						moveRocket(i);
 					}
 				})
-			);
+      });
 		}
 	}, [ask_model, score, playerPosition, walls, moveRocket]);
 

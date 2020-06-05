@@ -3,7 +3,7 @@ import { useCallback, useState, useEffect, useContext } from 'react';
 import { IWallValues } from '../Components/Wall/Generation';
 import { WALL_HEIGHT_PX } from '../Commons/DefaultValues';
 
-export const AI_NEAT_BOT = false;
+export const AI_NEAT_BOT = true;
 
 const PORT = 8888;
 const URL = `http://localhost:${PORT}`;
@@ -38,12 +38,11 @@ interface IProps {
 }
 
 const NeatBotContext = ({ children }: IProps) => {
-	const [count_generation, setCount_generation] = useState<number>(20);
+	const [count_generation, setCount_generation] = useState<number>(0);
 
 	const formatData = useCallback(
-		(score: number[], playerPosition: number[], lastWall?: IWallValues): Data[] =>
-			playerPosition.map((_, i) => {
-        const bla = {
+		(score: number[], playerPosition: number[], lastWall?: IWallValues): string =>
+			JSON.stringify(playerPosition.map((_, i) => ({
           id: i,
           score: score[i],
           rocket_top: playerPosition[i],
@@ -51,17 +50,16 @@ const NeatBotContext = ({ children }: IProps) => {
           wall_left: lastWall ? lastWall.leftPosition : 0,
           wall_top: lastWall ? lastWall.length * WALL_HEIGHT_PX : 0,
         }
-        console.log(bla);
-        return bla;
-      }),
+      ))),
 		[]
 	);
 
-	const send = useCallback(async (suffix: string, json = false): Promise<any> => {
+	const send = useCallback(async (suffix: string) :Promise<any> => {
 		try {
-			const response = await fetch(`${URL}/${suffix}`);
-			return json ? await response.json() : await response.blob();
-		} catch {
+      const response = await fetch(`${URL}/${suffix}`);
+      return await response.text();
+		} catch (e) {
+      console.log(e);
 			if (AI_NEAT_BOT) {
 				throw Error('Server could not be found while AI_NEAT_BOT is set to true');
 			}
@@ -73,8 +71,10 @@ const NeatBotContext = ({ children }: IProps) => {
 			score: number[],
 			playerPosition: number[],
 			lastWall?: IWallValues
-		): Promise<boolean[]> =>
-			await send(`ask_model?datas=${formatData(score, playerPosition, lastWall)}`, true),
+		): Promise<boolean[]> => {
+      const predictions = await send(`ask_model?datas=${formatData(score, playerPosition, lastWall)}`);
+      return JSON.parse(predictions.toLowerCase());
+    },
 		[send, formatData]
 	);
 
@@ -89,8 +89,8 @@ const NeatBotContext = ({ children }: IProps) => {
 	);
 
 	const fetchCountGeneration = useCallback(async (): Promise<void> => {
-		const result = await send('count_generation');
-		setCount_generation(result);
+    const count = await send('count_generation');
+		setCount_generation(Number(count));
 	}, [send, setCount_generation]);
 
 	useEffect(() => {
