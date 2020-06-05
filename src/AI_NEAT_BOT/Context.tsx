@@ -3,7 +3,7 @@ import { useCallback, useState, useEffect, useContext } from 'react';
 import { IWallValues } from '../Components/Wall/Generation';
 import { WALL_HEIGHT_PX } from '../Commons/DefaultValues';
 
-export const AI_NEAT_BOT = true;
+export const AI_NEAT_BOT = false;
 export const AI_NEAT_BOTS_DISPARITY_PX = 300;
 export const AI_NEAT_BOTS_AUTO_RESTART_MS = 1000;
 
