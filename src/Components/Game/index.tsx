@@ -68,8 +68,8 @@ const Game = () => {
 	const { isKnockingWall, lastWallHit, nextWallToPasse } = useCollisions();
 	const generateWall = useWallGeneration();
 
+	// Handle walls movement and rocket gravity
 	const loop = useCallback(() => {
-		// Moving the walls to the left
 		setWalls((walls) =>
 			walls.map((wall) => {
 				wall.leftPosition = wall.leftPosition - SHIFT_INCREMENT_PX;
@@ -89,6 +89,7 @@ const Game = () => {
 		}
 	}, [setWalls, setPlayerPosition, pauseRef, livesRef, playerPositionRef, isMoving]);
 
+	// Initialize states and loop
 	const start = useCallback(() => {
 		if (shift.current !== 0) {
 			AI_NEAT_BOT && step_generation(score, playerPosition, lastWallHit);
@@ -109,6 +110,7 @@ const Game = () => {
 		lastWallHit,
 	]);
 
+	// Handling score
 	useEffect(() => {
 		shift.current += SHIFT_INCREMENT_PX;
 		if (shift.current % WALLS_SPACE_PX === 0 && walls.length >= WALLS_NUMBER) {
