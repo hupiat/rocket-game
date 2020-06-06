@@ -71,9 +71,6 @@ const NeatBotContext = ({ children }: IProps) => {
 			return await response.text();
 		} catch (e) {
 			console.log(e);
-			if (AI_NEAT_BOT) {
-				throw Error('Server could not be found while AI_NEAT_BOT is set to true');
-			}
 		}
 	}, []);
 

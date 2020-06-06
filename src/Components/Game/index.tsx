@@ -166,9 +166,7 @@ const Game = () => {
 		<div
 			tabIndex={1}
 			style={containerStyle}
-			onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) =>
-				!AI_NEAT_BOT && handleKeyPress(0, e, loop)
-			}
+			onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => handleKeyPress(0, e, loop)}
 		>
 			<img src={SoundImage} alt='sound enabling logo' style={soundImageStyle} />
 
