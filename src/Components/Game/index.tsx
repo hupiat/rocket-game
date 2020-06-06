@@ -58,7 +58,12 @@ const Game = () => {
 		setPlayerPosition,
 		isMoving,
 	} = usePlayerContext();
-	const { ask_model, step_generation } = useNeatBotContext();
+	const {
+		ask_model,
+		step_generation,
+		count_generation,
+		setCount_generation,
+	} = useNeatBotContext();
 	const { moveRocket, handleKeyPress } = useGameKeysListener(isPaused, setIsPaused);
 	const { isKnockingWall, lastWallHit, nextWallToPasse } = useCollisions();
 	const generateWall = useWallGeneration();
@@ -85,11 +90,13 @@ const Game = () => {
 	}, [setWalls, setPlayerPosition, pauseRef, livesRef, playerPositionRef, isMoving]);
 
 	const start = useCallback(() => {
+		if (shift.current !== 0) {
+			AI_NEAT_BOT && step_generation(score, playerPosition, lastWallHit);
+		}
 		shift.current = 0;
 		setIsPaused(false);
 		score.forEach((_, i) => setScore(i, 0));
 		playerPosition.forEach((_, i) => setLives(i, PLAYER_LIVES_NUMBER));
-		AI_NEAT_BOT && step_generation(score, playerPosition, lastWallHit);
 		loop();
 	}, [
 		loop,
@@ -173,7 +180,13 @@ const Game = () => {
 				<Player isBlinking={!!losingLifeTimeout[i]} index={i} key={i} />
 			))}
 
-			<HUD onRetry={start} isPaused={isPaused} />
+			<HUD
+				onRetry={() => {
+					AI_NEAT_BOT && setCount_generation(count_generation + 1);
+					start();
+				}}
+				isPaused={isPaused}
+			/>
 
 			<Sound url={Music} playStatus='PLAYING' />
 		</div>

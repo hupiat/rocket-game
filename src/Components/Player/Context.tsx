@@ -36,12 +36,12 @@ interface IProps {
 }
 
 const PlayerContext = ({ children }: IProps) => {
-	const { count_generation } = useNeatBotContext();
+	const { count_individuals } = useNeatBotContext();
 
 	const init = useCallback(
 		(callback: () => any): any[] =>
-			[...Array(AI_NEAT_BOT ? count_generation : 1)].map(() => callback()),
-		[count_generation]
+			[...Array(AI_NEAT_BOT ? count_individuals : 1)].map(() => callback()),
+		[count_individuals]
 	);
 	const initPosition = () => {
 		let position = window.innerHeight / 2;
@@ -76,7 +76,7 @@ const PlayerContext = ({ children }: IProps) => {
 		playerPositionRef.current = init(() => initPosition());
 		setPlayerPositionState(playerPositionRef.current);
 		isMoving.current = init(() => false);
-	}, [count_generation, init]);
+	}, [init]);
 
 	const setScore = (index: number, score: number) =>
 		setScoreState((scoreState) => {

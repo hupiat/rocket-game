@@ -44,10 +44,10 @@ interface IProps {
 const HUD = ({ onRetry, isPaused }: IProps) => {
   const neatBotAutoRestart = useRef<NodeJS.Timeout | undefined>();
   const { score, lives } = usePlayerContext();
-  const { actual_gen_count } = useNeatBotContext();
+  const { count_generation } = useNeatBotContext();
 
 	const renderScore = (): JSX.Element =><b style={scoreStyle}>
-      {AI_NEAT_BOT ? `Gen : ${actual_gen_count}` : score[0]}
+      {AI_NEAT_BOT ? `Gen : ${count_generation}` : score[0]}
       {AI_NEAT_BOT && <>
       <br />
       {`Score: ${score[0]}`}

@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { Dispatch } from 'react';
 import { useCallback, useState, useEffect, useContext } from 'react';
 import { IWallValues } from '../Components/Wall/Generation';
 import { WALL_HEIGHT_PX } from '../Commons/DefaultValues';
 
-export const AI_NEAT_BOT = false;
+export const AI_NEAT_BOT = true;
 export const AI_NEAT_BOTS_DISPARITY_PX = 300;
 export const AI_NEAT_BOTS_AUTO_RESTART_MS = 1000;
 
-const PORT = 8888;
+const PORT = 8080;
 const URL = `http://localhost:${PORT}`;
 
 interface Data {
@@ -30,8 +30,9 @@ interface INeatBotContext {
 		playerPosition: number[],
 		walls: IWallValues[]
 	) => Promise<void>;
-  count_generation: number;
-  actual_gen_count: number;
+	count_individuals: number;
+	count_generation: number;
+	setCount_generation: Dispatch<number>;
 }
 
 const SetupNeatBotContext = React.createContext<INeatBotContext | undefined>(undefined);
@@ -41,8 +42,8 @@ interface IProps {
 }
 
 const NeatBotContext = ({ children }: IProps) => {
-  const [count_generation, setCount_generation] = useState<number>(0);
-  const [actual_gen_count, setActual_gen_count] = useState<number>(1);
+	const [count_individuals, setCount_individuals] = useState<number>(0);
+	const [count_generation, setCount_generation] = useState<number>(0);
 
 	const formatData = useCallback(
 		(score: number[], playerPosition: number[], walls?: IWallValues[]): string =>
@@ -82,10 +83,9 @@ const NeatBotContext = ({ children }: IProps) => {
 			playerPosition: number[],
 			walls: IWallValues[]
 		): Promise<boolean[]> => {
-			const predictions = await send(
-				`ask_model?datas=${formatData(score, playerPosition, walls)}`
-			);
-			return JSON.parse(predictions.toLowerCase());
+			const datas = formatData(score, playerPosition, walls);
+			const predictions = datas !== '[]' && (await send(`ask_model?datas=${datas}`));
+			return predictions ? JSON.parse(predictions.toLowerCase()) : [];
 		},
 		[send, formatData]
 	);
@@ -96,28 +96,30 @@ const NeatBotContext = ({ children }: IProps) => {
 			playerPosition: number[],
 			walls: IWallValues[]
 		): Promise<void> => {
-      setActual_gen_count(actual_gen_count + 1)
-			await send(`step_generation?datas=${formatData(score, playerPosition, walls)}`)
-    },
-		[send, formatData, actual_gen_count, setActual_gen_count]
+			setCount_generation(count_generation + 1);
+			const datas = formatData(score, playerPosition, walls);
+			datas !== '[]' && (await send(`step_generation?datas=${datas}`));
+		},
+		[send, formatData, count_generation, setCount_generation]
 	);
 
-	const fetchCountGeneration = useCallback(async (): Promise<void> => {
-		const count = await send('count_generation');
-		setCount_generation(Number(count));
-	}, [send, setCount_generation]);
+	const fetchCountIndividuals = useCallback(async (): Promise<void> => {
+		const count = await send('count_individuals');
+		setCount_individuals(Number(count));
+	}, [send, setCount_individuals]);
 
 	useEffect(() => {
-		fetchCountGeneration();
-  }, [fetchCountGeneration]);
+		fetchCountIndividuals();
+	}, [fetchCountIndividuals]);
 
 	return (
 		<SetupNeatBotContext.Provider
 			value={{
 				ask_model,
 				step_generation,
-        count_generation,
-        actual_gen_count
+				count_individuals,
+				count_generation,
+				setCount_generation,
 			}}
 		>
 			{children}
