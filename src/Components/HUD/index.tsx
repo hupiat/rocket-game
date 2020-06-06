@@ -51,36 +51,40 @@ const HUD = ({ onRetry, isPaused }: IProps) => {
 	const { score, lives } = usePlayerContext();
 	const { count_generation } = useNeatBotContext();
 
-	const renderScore = (): JSX.Element => (
-		<b style={scoreStyle}>
-			{AI_NEAT_BOT ? `Gen : ${count_generation}` : score[0]}
-			{AI_NEAT_BOT && (
-				<>
-					<br />
-					{`Score: ${score[0]}`}
-					<br />
-					{`Max: ${maxScore}`}
-				</>
-			)}
-		</b>
-	);
+	const renderScore = (): JSX.Element => {
+		if (score.some((s) => s > maxScore)) {
+			setMaxScore((maxScore) => {
+				let currentMaxScore = 0;
+				score.forEach((s) => {
+					if (s > maxScore) {
+						currentMaxScore = s;
+					}
+				});
+				return Math.max(maxScore, currentMaxScore);
+			});
+		}
+		return (
+			<b style={scoreStyle}>
+				{AI_NEAT_BOT ? `Gen : ${count_generation}` : score[0]}
+				{AI_NEAT_BOT && (
+					<>
+						<br />
+						{`Score: ${score[0]}`}
+						<br />
+						{`Max: ${maxScore}`}
+					</>
+				)}
+			</b>
+		);
+	};
 
 	const renderMenu = (isRetry: boolean = false): JSX.Element => {
-		let currentMaxScore = 0;
-		score.forEach((s) => {
-			if (s > maxScore) {
-				currentMaxScore = s;
-			}
-		});
-		if (currentMaxScore > maxScore) {
-			setMaxScore(currentMaxScore);
-		}
 		return (
 			<div style={menuStyle}>
 				<h1>{isRetry ? GAME_OVER_TEXT : PAUSE_TEXT}</h1>
 
 				<h3>
-					{SCORE_TEXT} {currentMaxScore}
+					{SCORE_TEXT} {maxScore}
 				</h3>
 
 				<button onClick={() => onRetry && onRetry()}>{RETRY_TEXT}</button>
