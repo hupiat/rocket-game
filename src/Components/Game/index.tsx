@@ -94,6 +94,7 @@ const Game = () => {
 		if (shift.current !== 0) {
 			AI_NEAT_BOT && step_generation(score, playerPosition, lastWallHit);
 		}
+		AI_NEAT_BOT && setWalls([]);
 		shift.current = 0;
 		setIsPaused(false);
 		score.forEach((_, i) => setScore(i, 0));

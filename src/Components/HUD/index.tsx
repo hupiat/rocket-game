@@ -1,7 +1,11 @@
-import React, { CSSProperties, useEffect, useRef } from 'react';
+import React, { CSSProperties, useEffect, useRef, useState } from 'react';
 import HeartImage from './assets/Heart.png';
 import { usePlayerContext } from '../Player/Context';
-import { AI_NEAT_BOT, AI_NEAT_BOTS_AUTO_RESTART_MS, useNeatBotContext } from '../../AI_NEAT_BOT/Context';
+import {
+	AI_NEAT_BOT,
+	AI_NEAT_BOTS_AUTO_RESTART_MS,
+	useNeatBotContext,
+} from '../../AI_NEAT_BOT/Context';
 
 const heartStyle: CSSProperties = {
 	position: 'relative',
@@ -42,31 +46,41 @@ interface IProps {
 }
 
 const HUD = ({ onRetry, isPaused }: IProps) => {
-  const neatBotAutoRestart = useRef<NodeJS.Timeout | undefined>();
-  const { score, lives } = usePlayerContext();
-  const { count_generation } = useNeatBotContext();
+	const neatBotAutoRestart = useRef<NodeJS.Timeout | undefined>();
+	const [maxScore, setMaxScore] = useState<number>(0);
+	const { score, lives } = usePlayerContext();
+	const { count_generation } = useNeatBotContext();
 
-	const renderScore = (): JSX.Element =><b style={scoreStyle}>
-      {AI_NEAT_BOT ? `Gen : ${count_generation}` : score[0]}
-      {AI_NEAT_BOT && <>
-      <br />
-      {`Score: ${score[0]}`}
-      </>}
-    </b>;
+	const renderScore = (): JSX.Element => (
+		<b style={scoreStyle}>
+			{AI_NEAT_BOT ? `Gen : ${count_generation}` : score[0]}
+			{AI_NEAT_BOT && (
+				<>
+					<br />
+					{`Score: ${score[0]}`}
+					<br />
+					{`Max: ${maxScore}`}
+				</>
+			)}
+		</b>
+	);
 
 	const renderMenu = (isRetry: boolean = false): JSX.Element => {
-		let maxScore = 0;
+		let currentMaxScore = 0;
 		score.forEach((s) => {
 			if (s > maxScore) {
-				maxScore = s;
+				currentMaxScore = s;
 			}
 		});
+		if (currentMaxScore > maxScore) {
+			setMaxScore(currentMaxScore);
+		}
 		return (
 			<div style={menuStyle}>
 				<h1>{isRetry ? GAME_OVER_TEXT : PAUSE_TEXT}</h1>
 
 				<h3>
-					{SCORE_TEXT} {maxScore}
+					{SCORE_TEXT} {currentMaxScore}
 				</h3>
 
 				<button onClick={() => onRetry && onRetry()}>{RETRY_TEXT}</button>
@@ -77,16 +91,21 @@ const HUD = ({ onRetry, isPaused }: IProps) => {
 	const renderLives = (): JSX.Element[] =>
 		[...Array(lives[0])].map((_, i) => (
 			<img src={HeartImage} key={i} alt={`heart-${i}`} style={heartStyle} />
-    ));
-    
-  useEffect(() => {
-    if (AI_NEAT_BOT && lives.length && lives.every(l => l <= 0) && !neatBotAutoRestart.current) {
-      neatBotAutoRestart.current = setTimeout(() => {
-        onRetry();
-        neatBotAutoRestart.current = undefined;
-      }, AI_NEAT_BOTS_AUTO_RESTART_MS);
-    }
-  }, [lives, onRetry])
+		));
+
+	useEffect(() => {
+		if (
+			AI_NEAT_BOT &&
+			lives.length &&
+			lives.every((l) => l <= 0) &&
+			!neatBotAutoRestart.current
+		) {
+			neatBotAutoRestart.current = setTimeout(() => {
+				onRetry();
+				neatBotAutoRestart.current = undefined;
+			}, AI_NEAT_BOTS_AUTO_RESTART_MS);
+		}
+	}, [lives, onRetry]);
 
 	return (
 		<>
