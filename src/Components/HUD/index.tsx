@@ -93,7 +93,7 @@ const HUD = ({ onRetry, isPaused }: IProps) => {
 	};
 
 	const renderLives = (): JSX.Element[] =>
-		[...Array(lives[0])].map((_, i) => (
+		[...Array(lives[0] > 0 ? lives[0] : 0)].map((_, i) => (
 			<img src={HeartImage} key={i} alt={`heart-${i}`} style={heartStyle} />
 		));
 

@@ -33,7 +33,7 @@ export const useGameKeysListener = (
 	const handleKeyPress = useCallback(
 		(index: number, e: React.KeyboardEvent<HTMLDivElement>, loop: () => void) => {
 			if (e.keyCode === ESCAPE && lives[index] > 0) {
-				const wasPaused: boolean = isPaused;
+				const wasPaused = isPaused;
 				setIsPaused(!isPaused);
 				if (wasPaused) {
 					loop();

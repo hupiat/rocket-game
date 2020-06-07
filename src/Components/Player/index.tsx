@@ -42,17 +42,19 @@ const Player = ({ index, isBlinking }: IProps) => {
 				style={{
 					...style,
 					animation: isBlinking || lives[index] <= 0 ? 'blink 1s linear infinite' : '',
-          top: `${playerPosition[index]}px`,
-          display: AI_NEAT_BOT ? lives[index] > 0 ? "block" : "none" : "block"
+					top: `${playerPosition[index]}px`,
+					display: AI_NEAT_BOT ? (lives[index] > 0 ? 'block' : 'none') : 'block',
 				}}
 				alt='rocket'
 			/>
 
-			<Sound
-				url={HitSound}
-				playStatus={isBlinking && shouldPlaySound.current && !AI_NEAT_BOT ? 'PLAYING' : 'STOPPED'}
-				onFinishedPlaying={() => (shouldPlaySound.current = false)}
-			/>
+			{!AI_NEAT_BOT && (
+				<Sound
+					url={HitSound}
+					playStatus={isBlinking && shouldPlaySound.current ? 'PLAYING' : 'STOPPED'}
+					onFinishedPlaying={() => (shouldPlaySound.current = false)}
+				/>
+			)}
 		</>
 	);
 };

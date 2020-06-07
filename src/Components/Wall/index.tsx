@@ -9,8 +9,12 @@ interface IProps {
 	direction: Direction;
 }
 
+export interface IWall extends IProps {
+	id: string;
+}
+
 const Wall = ({ length, leftPosition, direction }: IProps) => {
-	const blocks: JSX.Element[] = useMemo(
+	const blocks = useMemo(
 		() =>
 			[...Array(length)].map((_, i) => {
 				const style: CSSProperties = {
@@ -20,7 +24,7 @@ const Wall = ({ length, leftPosition, direction }: IProps) => {
 					left: `${leftPosition}px`,
 				};
 
-				const shift: number = i * WALL_HEIGHT_PX;
+				const shift = i * WALL_HEIGHT_PX;
 
 				if (direction === 'top') {
 					style.top = `${shift}px`;

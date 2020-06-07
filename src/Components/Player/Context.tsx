@@ -27,6 +27,9 @@ interface IPlayerContext {
 	losingLifeTimeout: Array<NodeJS.Timeout | undefined>;
 	setLosingLifeTimeout: (index: number, callback: NodeJS.Timeout | undefined) => void;
 	isMoving: MutableRefObject<boolean[]>;
+	isPlaying: boolean;
+	setIsPlaying: (isPlaying: boolean) => void;
+	isPlayingRef: MutableRefObject<boolean>;
 }
 
 const SetupPlayerContext = React.createContext<IPlayerContext | undefined>(undefined);
@@ -43,7 +46,7 @@ const PlayerContext = ({ children }: IProps) => {
 			[...Array(AI_NEAT_BOT ? count_individuals : 1)].map(() => callback()),
 		[count_individuals]
 	);
-	const initPosition = () => {
+	const initPosition = useCallback(() => {
 		let position = window.innerHeight / 2;
 		if (AI_NEAT_BOT) {
 			const shift = randomRange(10, AI_NEAT_BOTS_DISPARITY_PX);
@@ -54,7 +57,7 @@ const PlayerContext = ({ children }: IProps) => {
 			}
 		}
 		return position;
-	};
+	}, []);
 
 	const [score, setScoreState] = useState<number[]>(init(() => 0));
 	const [playerPosition, setPlayerPositionState] = useState<number[]>(
@@ -64,9 +67,16 @@ const PlayerContext = ({ children }: IProps) => {
 	const [losingLifeTimeout, setLosingLifeTimeoutState] = useState<
 		Array<NodeJS.Timeout | undefined>
 	>(init(() => undefined));
+	const [isPlaying, setIsPlayingState] = useState<boolean>(true);
 	const livesRef = useRef<number[]>(init(() => PLAYER_LIVES_NUMBER));
 	const playerPositionRef = useRef<number[]>(playerPosition);
 	const isMoving = useRef<boolean[]>(init(() => false));
+	const isPlayingRef = useRef<boolean>(isPlaying);
+
+	const setIsPlaying = (isPlaying: boolean) => {
+		setIsPlayingState(isPlaying);
+		isPlayingRef.current = isPlaying;
+	};
 
 	useEffect(() => {
 		setScoreState(init(() => 0));
@@ -76,7 +86,7 @@ const PlayerContext = ({ children }: IProps) => {
 		playerPositionRef.current = init(() => initPosition());
 		setPlayerPositionState(playerPositionRef.current);
 		isMoving.current = init(() => false);
-	}, [init]);
+	}, [init, initPosition]);
 
 	const setScore = (index: number, score: number) =>
 		setScoreState((scoreState) => {
@@ -129,6 +139,9 @@ const PlayerContext = ({ children }: IProps) => {
 				losingLifeTimeout,
 				setLosingLifeTimeout,
 				isMoving,
+				isPlaying,
+				setIsPlaying,
+				isPlayingRef,
 			}}
 		>
 			{children}

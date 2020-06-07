@@ -1,18 +1,24 @@
 import React, { useState, CSSProperties, useEffect, useCallback, useRef } from 'react';
 import Sound from 'react-sound';
 import Player from '../Player';
-import Wall from '../Wall';
+import Wall, { IWall } from '../Wall';
 import HUD from '../HUD';
 import Background from './assets/Background.png';
 import SoundImage from './assets/Sound.png';
 import Music from './assets/Music.mp3';
-import { PLAYER_LIVES_NUMBER, PLAYER_IMMUNE_TIME_MS } from '../../Commons/DefaultValues';
-import { IWallValues, useWallGeneration } from '../Wall/Generation';
+import {
+	PLAYER_LIVES_NUMBER,
+	PLAYER_IMMUNE_TIME_MS,
+	WALL_WIDTH_PX,
+} from '../../Commons/DefaultValues';
+import { useWallGeneration } from '../Wall/Generation';
 import { usePause } from './Pause';
 import { useGameKeysListener } from './KeysListener';
 import { useCollisions } from './Collisions';
 import { usePlayerContext } from '../Player/Context';
 import { AI_NEAT_BOT, useNeatBotContext } from '../../AI_NEAT_BOT/Context';
+import { useMonster } from '../Monster/useMonster';
+import Monster, { IMonster } from '../Monster';
 
 const containerStyle: CSSProperties = {
 	display: 'flex',
@@ -30,34 +36,39 @@ const soundImageStyle: CSSProperties = {
 
 // Value in px used to multiply the index when generating
 // the walls, representing the space between each one
-export const WALLS_SPACE_PX: number = 100;
+export const WALLS_SPACE_PX = 150;
 
 // Value in ms representing the time between each iteration
-export const LOOP_INCREMENT_MS: number = 20;
-
-// Number of active walls at the same time
-const WALLS_NUMBER: number = 15;
+export const LOOP_INCREMENT_MS = 25;
 
 // Value in px representing the walls shift at each iteration
-const SHIFT_INCREMENT_PX: number = 5;
+export const SHIFT_INCREMENT_PX = 5;
+
+const WALLS_NUMBER = 10;
+const GRAVITY_FORCE = 1.3;
 
 const Game = () => {
-	const [walls, setWalls] = useState<IWallValues[]>([]);
+	const [walls, setWalls] = useState<IWall[]>([]);
+	const wallsRef = useRef(walls);
+	const [monsters, setMonsters] = useState<IMonster[]>([]);
 	const shift = useRef<number>(0);
-	const { isPaused, setIsPaused, pauseRef } = usePause();
 	const {
 		score,
 		setScore,
-		lives,
 		livesRef,
 		losingLifeTimeout,
 		setLosingLifeTimeout,
+		lives,
 		setLives,
 		playerPosition,
 		playerPositionRef,
 		setPlayerPosition,
 		isMoving,
+		isPlaying,
+		setIsPlaying,
+		isPlayingRef,
 	} = usePlayerContext();
+	const { isPaused, setIsPaused } = usePause(setIsPlaying);
 	const {
 		ask_model,
 		step_generation,
@@ -65,43 +76,111 @@ const Game = () => {
 		setCount_generation,
 	} = useNeatBotContext();
 	const { moveRocket, handleKeyPress } = useGameKeysListener(isPaused, setIsPaused);
-	const { isKnockingWall, lastWallHit, nextWallToPasse } = useCollisions();
+	const { isPlayerKnockingWall, lastWallHit, nextWallToPass } = useCollisions();
+	const { hitMonster, nextMonster, killerMonster } = useMonster(
+		monsters,
+		setMonsters,
+		walls
+	);
 	const generateWall = useWallGeneration();
 
-	// Handle walls movement and rocket gravity
+	// Handle walls movement, collisions, gravity
 	const loop = useCallback(() => {
-		setWalls((walls) =>
-			walls.map((wall) => {
-				wall.leftPosition = wall.leftPosition - SHIFT_INCREMENT_PX;
-				return wall;
-			})
-		);
-		if (
-			!pauseRef.current &&
-			(livesRef.current.some((l) => l > 0) || livesRef.current.length === 0)
-		) {
+		let timeout: NodeJS.Timeout;
+		if (isPlayingRef.current) {
+			setWalls((walls) => {
+				const newWalls = walls.map((wall) => {
+					wall.leftPosition -= SHIFT_INCREMENT_PX;
+					return wall;
+				});
+				wallsRef.current = newWalls;
+				return newWalls;
+			});
+			setMonsters((monsters) =>
+				monsters.map((monster) => {
+					monster.left -= SHIFT_INCREMENT_PX;
+					monster.top += GRAVITY_FORCE;
+					return monster;
+				})
+			);
 			playerPositionRef.current.forEach((pos, i) => {
 				if (!isMoving.current[i]) {
-					setPlayerPosition(i, pos + 1.3);
+					setPlayerPosition(i, pos + GRAVITY_FORCE);
 				}
 			});
-			setTimeout(loop, LOOP_INCREMENT_MS);
+			timeout = setTimeout(loop, LOOP_INCREMENT_MS);
 		}
-	}, [setWalls, setPlayerPosition, pauseRef, livesRef, playerPositionRef, isMoving]);
+		return () => clearTimeout(timeout);
+	}, [isMoving, playerPositionRef, setPlayerPosition, isPlayingRef]);
+
+	const handleCollisions = useCallback(() => {
+		playerPosition.forEach((_, i) => {
+			if (
+				losingLifeTimeout[i] === undefined &&
+				(hitMonster(i) || isPlayerKnockingWall(i, wallsRef.current))
+			) {
+				setLives(i, livesRef.current[i] - 1);
+				livesRef.current[i] > 0 &&
+					setTimeout(() => {
+						setLosingLifeTimeout(i, undefined);
+					}, PLAYER_IMMUNE_TIME_MS);
+			}
+		});
+	}, [
+		hitMonster,
+		isPlayerKnockingWall,
+		livesRef,
+		losingLifeTimeout,
+		playerPosition,
+		setLives,
+		setLosingLifeTimeout,
+	]);
+
+	const handleWallsGeneration = useCallback(() => {
+		if (shift.current % WALLS_SPACE_PX === 0) {
+			setWalls((walls) => {
+				if (walls[0] && walls[0].leftPosition < -WALL_WIDTH_PX) {
+					walls.shift();
+				}
+				walls.push(generateWall(WALLS_NUMBER));
+				return walls;
+			});
+		}
+	}, [setWalls, generateWall]);
+
+	const handleScore = useCallback(() => {
+		shift.current += SHIFT_INCREMENT_PX;
+		if (shift.current % WALLS_SPACE_PX === 0 && walls.length >= WALLS_NUMBER) {
+			score.forEach((_, i) => setScore(i, score[i] + 1));
+		}
+	}, [walls, score, setScore]);
+
+	const handleBotsMovements = useCallback(() => {
+		ask_model(score, playerPosition, nextWallToPass, nextMonster()).then(
+			(predictions) => {
+				predictions.forEach((prediction, i) => {
+					if (prediction) {
+						moveRocket(i);
+					}
+				});
+			}
+		);
+	}, [ask_model, score, playerPosition, moveRocket, nextWallToPass, nextMonster]);
 
 	// Initialize states and loop
 	const start = useCallback(() => {
 		if (shift.current !== 0) {
-			AI_NEAT_BOT && step_generation(score, playerPosition, lastWallHit);
+			AI_NEAT_BOT && step_generation(score, playerPosition, lastWallHit, killerMonster);
 		}
-		AI_NEAT_BOT && setWalls([]);
+		setWalls([]);
 		shift.current = 0;
 		setIsPaused(false);
+		setIsPlaying(true);
+		setMonsters([]);
 		score.forEach((_, i) => setScore(i, 0));
 		playerPosition.forEach((_, i) => setLives(i, PLAYER_LIVES_NUMBER));
 		loop();
 	}, [
-		loop,
 		score,
 		setScore,
 		setIsPaused,
@@ -109,59 +188,35 @@ const Game = () => {
 		playerPosition,
 		step_generation,
 		lastWallHit,
+		loop,
+		killerMonster,
+		setIsPlaying,
 	]);
 
-	// Handling score
 	useEffect(() => {
-		shift.current += SHIFT_INCREMENT_PX;
-		if (shift.current % WALLS_SPACE_PX === 0 && walls.length >= WALLS_NUMBER) {
-			score.forEach((_, i) => setScore(i, score[i] + 1));
-		}
-	}, [walls, score, setScore]);
-
-	// Handling bots
-	useEffect(() => {
-		if (AI_NEAT_BOT) {
-			ask_model(score, playerPosition, nextWallToPasse).then((predictions) => {
-				predictions.forEach((prediction, i) => {
-					if (prediction) {
-						moveRocket(i);
-					}
-				});
-			});
-		}
-	}, [ask_model, score, playerPosition, walls, moveRocket, nextWallToPasse]);
-
-	// Handling infinite generation
-	useEffect(() => {
-		if (shift.current % WALLS_SPACE_PX === 0) {
-			setWalls((walls) => {
-				if (walls.length > WALLS_NUMBER + 1) {
-					walls.shift();
-				}
-				walls.push(generateWall(WALLS_NUMBER));
-				return walls;
-			});
-		}
-		// We don't want this function be triggered unless the walls
-		// are moving, otherwise it would generate too many ones
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [walls]);
-
-	// Checking collisions
-	useEffect(() => {
-		playerPosition.forEach((_, i) => {
-			if (!isPaused && losingLifeTimeout[i] === undefined && isKnockingWall(i, walls)) {
-				setLives(i, lives[i] - 1);
-				setLosingLifeTimeout(
-					i,
-					setTimeout(() => setLosingLifeTimeout(i, undefined), PLAYER_IMMUNE_TIME_MS)
-				);
+		if (isPlaying) {
+			handleScore();
+			handleWallsGeneration();
+			if (AI_NEAT_BOT && nextWallToPass) {
+				handleBotsMovements();
 			}
-		});
-		// We just want to check collisions when elements are moving
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [walls, playerPosition]);
+		}
+	}, [
+		walls,
+		handleScore,
+		handleWallsGeneration,
+		handleBotsMovements,
+		nextWallToPass,
+		isPaused,
+		isPlaying,
+		lives,
+	]);
+
+	useEffect(() => {
+		if (isPlaying) {
+			handleCollisions();
+		}
+	}, [walls, monsters, handleCollisions, isPlaying]);
 
 	useEffect(start, []);
 
@@ -173,12 +228,16 @@ const Game = () => {
 		>
 			<img src={SoundImage} alt='sound enabling logo' style={soundImageStyle} />
 
-			{walls.map((wall, i) => (
-				<Wall key={i} {...wall} />
+			{walls.map((w) => (
+				<Wall key={w.id} {...w} />
 			))}
 
 			{playerPosition.map((_, i) => (
 				<Player isBlinking={!!losingLifeTimeout[i]} index={i} key={i} />
+			))}
+
+			{monsters.map((m) => (
+				<Monster key={m.id} monster={m} />
 			))}
 
 			<HUD

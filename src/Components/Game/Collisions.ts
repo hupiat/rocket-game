@@ -1,83 +1,123 @@
 import { usePlayerContext } from '../Player/Context';
-import { IWallValues } from '../Wall/Generation';
+import { IWall } from '../Wall';
 import {
 	PLAYER_HEIGHT_PX,
 	WALL_HEIGHT_PX,
 	PLAYER_WIDTH_PX,
+	MONSTER_WIDTH_PX,
+	MONSTER_HEIGHT_PX,
 } from '../../Commons/DefaultValues';
 import { useCallback, useState } from 'react';
 import { PLAYER_LEFT_POSITION_PX } from '../Player';
+import { IMonster } from '../Monster';
 
 export interface ICollisions {
-	lastWallHit: IWallValues[];
-	nextWallToPasse: IWallValues[];
-	isKnockingWall: (index: number, walls: IWallValues[]) => boolean;
+	isPlayerKnockingWall: (index: number, walls: IWall[]) => boolean;
+	isMonsterKnockingWall: (monster: IMonster, walls: IWall[]) => boolean;
+	lastWallHit: IWall[];
+	nextWallToPass: IWall[];
 }
 
 export const useCollisions = (): ICollisions => {
-	const [lastWallHit, setLastWallHit] = useState<IWallValues[]>([]);
-	const [nextWallToPasse, setNextWallToPasse] = useState<IWallValues[]>([]);
+	const [lastWallHit, setLastWallHit] = useState<IWall[]>([]);
+	const [nextWallToPass, setNextWallToPass] = useState<IWall[]>([]);
 	const { playerPosition } = usePlayerContext();
 
 	const isKnockingWallVertically = useCallback(
-		(index: number, wall: IWallValues): boolean => {
+		(entityHeight: number, wall: IWall): boolean => {
 			const wallHeight = wall.length * WALL_HEIGHT_PX;
-			const playerHeight = playerPosition[index] + PLAYER_HEIGHT_PX / 2;
-
 			if (wall.direction === 'top') {
-				return wallHeight >= playerHeight;
+				return wallHeight >= entityHeight;
 			}
 			if (wall.direction === 'bottom') {
-				return window.innerHeight - wallHeight <= playerHeight;
-			}
-
-			return false;
-		},
-		[playerPosition]
-	);
-
-	const isKnockingWallHorizontally = useCallback(
-		(index: number, wall: IWallValues, walls: IWallValues[]): boolean => {
-			if (
-				wall.leftPosition > PLAYER_LEFT_POSITION_PX - PLAYER_WIDTH_PX / 2 &&
-				wall.leftPosition < PLAYER_LEFT_POSITION_PX + PLAYER_WIDTH_PX / 2
-			) {
-				setNextWallToPasse((wallPassed) => {
-					wallPassed[index] = walls[walls.indexOf(wall) + 1];
-					return wallPassed;
-				});
-				return true;
+				return window.innerHeight - wallHeight <= entityHeight;
 			}
 			return false;
 		},
 		[]
 	);
 
-	const isKnockingWall = useCallback(
-		(index: number, walls: IWallValues[]): boolean => {
+	const isKnockingWallHorizontally = useCallback(
+		(leftSide: number, rightSide: number, wall: IWall): boolean =>
+			wall.leftPosition > leftSide && wall.leftPosition < rightSide,
+		[]
+	);
+
+	const localCollisionSearch = useCallback(
+		(
+			check: (i: number) => boolean,
+			walls: IWall[],
+			callback?: (i: number) => void
+		): boolean => {
 			// We make a local search on the first walls
-			// (the previous, maybe hidden, the actual, and the next one)
-			for (let i = walls.length >= 3 ? 3 : walls.length; i > 0; i--) {
-				if (
-					isKnockingWallHorizontally(i, walls[i - 1], walls) &&
-					isKnockingWallVertically(index, walls[i - 1])
-				) {
-					setLastWallHit((wallsHit) => {
-						wallsHit[i] = walls[i];
-						return wallsHit;
-					});
+			for (let i = walls.length >= 5 ? 5 : walls.length; i > 0; i--) {
+				if (check(i)) {
+					callback && callback(i);
 					return true;
 				}
 			}
-
 			return false;
 		},
-		[isKnockingWallHorizontally, isKnockingWallVertically]
+		[]
+	);
+
+	const isPlayerKnockingWall = useCallback(
+		(index: number, walls: IWall[]): boolean => {
+			return localCollisionSearch(
+				(i) => {
+					const matchHorizontal = isKnockingWallHorizontally(
+						(PLAYER_LEFT_POSITION_PX - PLAYER_WIDTH_PX) / 2,
+						(PLAYER_LEFT_POSITION_PX + PLAYER_WIDTH_PX) / 2,
+						walls[i - 1]
+					);
+					matchHorizontal &&
+						setNextWallToPass((wallsToPass) => {
+							wallsToPass[index] = walls[i - 1];
+							return wallsToPass;
+						});
+					return (
+						matchHorizontal &&
+						isKnockingWallVertically(
+							playerPosition[index] + PLAYER_HEIGHT_PX / 2,
+							walls[i - 1]
+						)
+					);
+				},
+				walls,
+				(i) =>
+					setLastWallHit((wallsHit) => {
+						wallsHit[i] = walls[i];
+						return wallsHit;
+					})
+			);
+		},
+		[
+			isKnockingWallHorizontally,
+			isKnockingWallVertically,
+			localCollisionSearch,
+			playerPosition,
+		]
+	);
+
+	const isMonsterKnockingWall = useCallback(
+		(monster: IMonster, walls: IWall[]): boolean => {
+			return localCollisionSearch(
+				(i) =>
+					isKnockingWallHorizontally(
+						(monster.left - MONSTER_WIDTH_PX) / 2,
+						(monster.left + MONSTER_WIDTH_PX) / 2,
+						walls[i - 1]
+					) && isKnockingWallVertically(monster.top + MONSTER_HEIGHT_PX, walls[i - 1]),
+				walls
+			);
+		},
+		[isKnockingWallHorizontally, isKnockingWallVertically, localCollisionSearch]
 	);
 
 	return {
+		isPlayerKnockingWall,
+		isMonsterKnockingWall,
 		lastWallHit,
-		nextWallToPasse,
-		isKnockingWall,
+		nextWallToPass,
 	};
 };
