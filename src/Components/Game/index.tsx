@@ -121,9 +121,15 @@ const Game = () => {
 			) {
 				setLives(i, livesRef.current[i] - 1);
 				livesRef.current[i] > 0 &&
-					setTimeout(() => {
-						setLosingLifeTimeout(i, undefined);
-					}, PLAYER_IMMUNE_TIME_MS);
+					setLosingLifeTimeout(
+						i,
+						setTimeout(() => {
+							if (livesRef.current.every((l) => l <= 0)) {
+								setIsPlaying(false);
+							}
+							setLosingLifeTimeout(i, undefined);
+						}, PLAYER_IMMUNE_TIME_MS)
+					);
 			}
 		});
 	}, [
@@ -134,6 +140,7 @@ const Game = () => {
 		playerPosition,
 		setLives,
 		setLosingLifeTimeout,
+		setIsPlaying,
 	]);
 
 	const handleWallsGeneration = useCallback(() => {
