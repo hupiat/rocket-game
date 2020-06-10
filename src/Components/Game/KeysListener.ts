@@ -5,6 +5,7 @@ import {
 	PLAYER_MOVE_VALUE_PX,
 	PLAYER_MOVE_REST_DELAY_MS,
 } from '../../Commons/DefaultValues';
+import { usePause } from './Pause';
 
 export interface IKeysListener {
 	moveRocket: (index: number) => void;
@@ -15,10 +16,8 @@ export interface IKeysListener {
 	) => void;
 }
 
-export const useGameKeysListener = (
-	isPaused: boolean,
-	setIsPaused: (isPaused: boolean) => void
-): IKeysListener => {
+export const useGameKeysListener = (): IKeysListener => {
+	const { isPaused, setIsPaused } = usePause();
 	const { playerPosition, setPlayerPosition, lives, isMoving } = usePlayerContext();
 
 	const moveRocket = useCallback(

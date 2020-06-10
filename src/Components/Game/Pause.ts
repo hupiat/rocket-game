@@ -6,14 +6,13 @@ export interface IPause {
 	setIsPaused: (isPaused: boolean) => void;
 }
 
-export const usePause = (setIsPlaying: (isPLaying: boolean) => void): IPause => {
+export const usePause = (): IPause => {
 	const pauseRef = useRef<boolean>(false);
 	const [isPaused, setPauseState] = useState<boolean>(false);
 
 	const setIsPaused = (isPaused: boolean): void => {
 		pauseRef.current = isPaused;
 		setPauseState(isPaused);
-		setIsPlaying(!isPaused);
 	};
 
 	return {

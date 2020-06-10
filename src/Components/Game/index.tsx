@@ -1,4 +1,11 @@
-import React, { useState, CSSProperties, useEffect, useCallback, useRef } from 'react';
+import React, {
+	useState,
+	CSSProperties,
+	useEffect,
+	useCallback,
+	useRef,
+	useMemo,
+} from 'react';
 import Sound from 'react-sound';
 import Player from '../Player';
 import Wall, { IWall } from '../Wall';
@@ -52,30 +59,28 @@ const Game = () => {
 	const wallsRef = useRef(walls);
 	const [monsters, setMonsters] = useState<IMonster[]>([]);
 	const shift = useRef<number>(0);
+	const timeout = useRef<NodeJS.Timeout>();
 	const {
 		score,
 		setScore,
+		lives,
 		livesRef,
 		losingLifeTimeout,
 		setLosingLifeTimeout,
-		lives,
 		setLives,
 		playerPosition,
 		playerPositionRef,
 		setPlayerPosition,
 		isMoving,
-		isPlaying,
-		setIsPlaying,
-		isPlayingRef,
 	} = usePlayerContext();
-	const { isPaused, setIsPaused } = usePause(setIsPlaying);
+	const { isPaused, setIsPaused } = usePause();
 	const {
 		ask_model,
 		step_generation,
 		count_generation,
 		setCount_generation,
 	} = useNeatBotContext();
-	const { moveRocket, handleKeyPress } = useGameKeysListener(isPaused, setIsPaused);
+	const { moveRocket, handleKeyPress } = useGameKeysListener();
 	const { isPlayerKnockingWall, lastWallHit, nextWallToPass } = useCollisions();
 	const { hitMonster, nextMonster, killerMonster } = useMonster(
 		monsters,
@@ -84,64 +89,76 @@ const Game = () => {
 	);
 	const generateWall = useWallGeneration();
 
+	const isAlive = useMemo(() => !lives.every((l) => l <= 0), [lives]);
+	const isPlaying = useMemo(() => timeout.current && !isPaused && isAlive, [
+		isPaused,
+		isAlive,
+	]);
+
 	// Handle walls movement, collisions, gravity
 	const loop = useCallback(() => {
-		let timeout: NodeJS.Timeout;
-		if (isPlayingRef.current) {
-			setWalls((walls) => {
-				const newWalls = walls.map((wall) => {
-					wall.leftPosition -= SHIFT_INCREMENT_PX;
-					return wall;
-				});
-				wallsRef.current = newWalls;
-				return newWalls;
+		timeout.current && clearTimeout(timeout.current);
+		setWalls((walls) => {
+			const newWalls = walls.map((wall) => {
+				wall.leftPosition -= SHIFT_INCREMENT_PX;
+				return wall;
 			});
-			setMonsters((monsters) =>
-				monsters.map((monster) => {
-					monster.left -= SHIFT_INCREMENT_PX;
-					monster.top += GRAVITY_FORCE;
-					return monster;
-				})
-			);
-			playerPositionRef.current.forEach((pos, i) => {
-				if (!isMoving.current[i]) {
-					setPlayerPosition(i, pos + GRAVITY_FORCE);
-				}
-			});
-			timeout = setTimeout(loop, LOOP_INCREMENT_MS);
-		}
-		return () => clearTimeout(timeout);
-	}, [isMoving, playerPositionRef, setPlayerPosition, isPlayingRef]);
-
-	const handleCollisions = useCallback(() => {
-		playerPosition.forEach((_, i) => {
-			if (
-				losingLifeTimeout[i] === undefined &&
-				(hitMonster(i) || isPlayerKnockingWall(i, wallsRef.current))
-			) {
-				setLives(i, livesRef.current[i] - 1);
-				livesRef.current[i] > 0 &&
-					setLosingLifeTimeout(
-						i,
-						setTimeout(() => {
-							if (livesRef.current.every((l) => l <= 0)) {
-								setIsPlaying(false);
-							}
-							setLosingLifeTimeout(i, undefined);
-						}, PLAYER_IMMUNE_TIME_MS)
-					);
+			wallsRef.current = newWalls;
+			return newWalls;
+		});
+		setMonsters((monsters) =>
+			monsters.map((monster) => {
+				monster.left -= SHIFT_INCREMENT_PX;
+				monster.top += GRAVITY_FORCE;
+				return monster;
+			})
+		);
+		playerPositionRef.current.forEach((pos, i) => {
+			if (!isMoving.current[i]) {
+				setPlayerPosition(i, pos + GRAVITY_FORCE);
 			}
 		});
+		timeout.current = setTimeout(loop, LOOP_INCREMENT_MS);
+	}, [isMoving, playerPositionRef, setPlayerPosition, setWalls]);
+
+	const handleCollisions = useCallback(() => {
+		if (isAlive) {
+			playerPosition.forEach((_, i) => {
+				if (
+					losingLifeTimeout[i] === undefined &&
+					(hitMonster(i) || isPlayerKnockingWall(i, wallsRef.current))
+				) {
+					setLives(i, livesRef.current[i] - 1);
+					livesRef.current[i] > 0 &&
+						setLosingLifeTimeout(
+							i,
+							setTimeout(() => {
+								setLosingLifeTimeout(i, undefined);
+							}, PLAYER_IMMUNE_TIME_MS)
+						);
+				}
+			});
+		} else if (timeout.current) {
+			clearTimeout(timeout.current);
+		}
 	}, [
 		hitMonster,
 		isPlayerKnockingWall,
 		livesRef,
+		timeout,
 		losingLifeTimeout,
 		playerPosition,
 		setLives,
 		setLosingLifeTimeout,
-		setIsPlaying,
+		isAlive,
 	]);
+
+	const handleScore = useCallback(() => {
+		shift.current += SHIFT_INCREMENT_PX;
+		if (shift.current % WALLS_SPACE_PX === 0 && walls.length >= WALLS_NUMBER) {
+			score.forEach((_, i) => setScore(i, score[i] + 1));
+		}
+	}, [walls, score, setScore]);
 
 	const handleWallsGeneration = useCallback(() => {
 		if (shift.current % WALLS_SPACE_PX === 0) {
@@ -154,13 +171,6 @@ const Game = () => {
 			});
 		}
 	}, [setWalls, generateWall]);
-
-	const handleScore = useCallback(() => {
-		shift.current += SHIFT_INCREMENT_PX;
-		if (shift.current % WALLS_SPACE_PX === 0 && walls.length >= WALLS_NUMBER) {
-			score.forEach((_, i) => setScore(i, score[i] + 1));
-		}
-	}, [walls, score, setScore]);
 
 	const handleBotsMovements = useCallback(() => {
 		ask_model(score, playerPosition, nextWallToPass, nextMonster()).then(
@@ -182,7 +192,6 @@ const Game = () => {
 		setWalls([]);
 		shift.current = 0;
 		setIsPaused(false);
-		setIsPlaying(true);
 		setMonsters([]);
 		score.forEach((_, i) => setScore(i, 0));
 		playerPosition.forEach((_, i) => setLives(i, PLAYER_LIVES_NUMBER));
@@ -197,33 +206,32 @@ const Game = () => {
 		lastWallHit,
 		loop,
 		killerMonster,
-		setIsPlaying,
 	]);
 
 	useEffect(() => {
 		if (isPlaying) {
-			handleScore();
-			handleWallsGeneration();
+			handleCollisions();
 			if (AI_NEAT_BOT && nextWallToPass) {
 				handleBotsMovements();
 			}
 		}
 	}, [
 		walls,
+		monsters,
+		playerPosition,
+		handleCollisions,
 		handleScore,
-		handleWallsGeneration,
 		handleBotsMovements,
 		nextWallToPass,
-		isPaused,
 		isPlaying,
-		lives,
 	]);
 
 	useEffect(() => {
 		if (isPlaying) {
-			handleCollisions();
+			handleScore();
+			handleWallsGeneration();
 		}
-	}, [walls, monsters, handleCollisions, isPlaying]);
+	}, [walls, isPlaying, handleScore, handleWallsGeneration]);
 
 	useEffect(start, []);
 
