@@ -53,6 +53,7 @@ export const useMonster = (
 		return monster;
 	}, [monsters]);
 
+	// TODO : not working, to move into useCollisions
 	const hitMonster = useCallback(
 		(index: number) => {
 			const matchHorizontal = monsters.some(

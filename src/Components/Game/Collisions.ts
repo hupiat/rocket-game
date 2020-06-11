@@ -49,7 +49,7 @@ export const useCollisions = (): ICollisions => {
 			walls: IWall[],
 			callback?: (i: number) => void
 		): boolean => {
-			for (let i = walls.length >= 5 ? 5 : walls.length; i > 0; i--) {
+			for (let i = walls.length >= 3 ? 3 : walls.length; i > 0; i--) {
 				if (check(i)) {
 					callback && callback(i);
 					return true;
@@ -100,6 +100,7 @@ export const useCollisions = (): ICollisions => {
 
 	const isMonsterKnockingWall = useCallback(
 		(monster: IMonster, walls: IWall[]): boolean => {
+			// TODO : not working, get monster pos to perform collisions search
 			return localCollisionSearch(
 				(i) =>
 					isKnockingWallHorizontally(
