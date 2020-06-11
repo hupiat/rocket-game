@@ -49,7 +49,6 @@ export const useCollisions = (): ICollisions => {
 			walls: IWall[],
 			callback?: (i: number) => void
 		): boolean => {
-			// We make a local search on the first walls
 			for (let i = walls.length >= 5 ? 5 : walls.length; i > 0; i--) {
 				if (check(i)) {
 					callback && callback(i);

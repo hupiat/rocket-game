@@ -41,14 +41,10 @@ const soundImageStyle: CSSProperties = {
 	zIndex: 100,
 };
 
-// Value in px used to multiply the index when generating
-// the walls, representing the space between each one
 export const WALLS_SPACE_PX = 150;
 
-// Value in ms representing the time between each iteration
 export const LOOP_INCREMENT_MS = 25;
 
-// Value in px representing the walls shift at each iteration
 export const SHIFT_INCREMENT_PX = 5;
 
 const WALLS_NUMBER = 10;
