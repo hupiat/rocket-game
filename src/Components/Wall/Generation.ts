@@ -33,7 +33,6 @@ export const useWallGeneration = (): ((index: number) => IWall) => {
 		let length = Math.floor(Math.random() * (WALL_BLOCKS_MAX_LENGTH - 1) + 1);
 		length = generateLength(direction, length);
 
-		console.log(index, index * WALLS_SPACE_PX);
 		const leftPosition = index * WALLS_SPACE_PX;
 
 		return {
