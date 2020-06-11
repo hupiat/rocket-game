@@ -78,25 +78,31 @@ const PlayerContext = ({ children }: IProps) => {
 		isMoving.current = init(() => false);
 	}, [init, initPosition]);
 
-	const setScore = (index: number, score: number) =>
-		setScoreState((scoreState) => {
-			scoreState[index] = score;
-			return scoreState;
-		});
+	const setScore = useCallback(
+		(index: number, score: number): void =>
+			setScoreState((scoreState) => {
+				scoreState[index] = score;
+				return scoreState;
+			}),
+		[]
+	);
 
-	const setLives = (index: number, lives: number): void => {
-		livesRef.current[index] = lives;
-		setLivesState((livesState) => {
-			livesState[index] = lives;
-			return livesState;
-		});
-		if (AI_NEAT_BOT && livesRef.current.every((l) => l <= 0)) {
-			playerPositionRef.current = init(() => initPosition());
-			setPlayerPositionState(playerPositionRef.current);
-		}
-	};
+	const setLives = useCallback(
+		(index: number, lives: number): void => {
+			livesRef.current[index] = lives;
+			setLivesState((livesState) => {
+				livesState[index] = lives;
+				return livesState;
+			});
+			if (AI_NEAT_BOT && livesRef.current.every((l) => l <= 0)) {
+				playerPositionRef.current = init(() => initPosition());
+				setPlayerPositionState(playerPositionRef.current);
+			}
+		},
+		[init, initPosition]
+	);
 
-	const setPlayerPosition = (index: number, position: number): void => {
+	const setPlayerPosition = useCallback((index: number, position: number): void => {
 		if (position < window.innerHeight - PLAYER_HEIGHT_PX && position > 0) {
 			playerPositionRef.current[index] = position;
 			setPlayerPositionState((positionState) => {
@@ -104,16 +110,16 @@ const PlayerContext = ({ children }: IProps) => {
 				return positionState;
 			});
 		}
-	};
+	}, []);
 
-	const setLosingLifeTimeout = (
-		index: number,
-		losingLifeTimeout?: NodeJS.Timeout
-	): void =>
-		setLosingLifeTimeoutState((losingLifeTimeoutState) => {
-			losingLifeTimeoutState[index] = losingLifeTimeout;
-			return losingLifeTimeoutState;
-		});
+	const setLosingLifeTimeout = useCallback(
+		(index: number, losingLifeTimeout?: NodeJS.Timeout): void =>
+			setLosingLifeTimeoutState((losingLifeTimeoutState) => {
+				losingLifeTimeoutState[index] = losingLifeTimeout;
+				return losingLifeTimeoutState;
+			}),
+		[]
+	);
 
 	return (
 		<SetupPlayerContext.Provider

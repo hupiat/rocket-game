@@ -80,18 +80,18 @@ const NeatBotContext = ({ children }: IProps) => {
 		try {
 			let formatedParams = `${url}${params ? '?' : ''}`;
 			if (params) {
-				const paramsLength = Object.keys(params).length;
-				Object.keys(params).forEach(
-					(param, i) =>
-						(formatedParams += `${param}=${params[param]}${
-							i !== paramsLength - 1 ? '&' : ''
+				const paramsKeys = Object.keys(params);
+				paramsKeys.forEach(
+					(paramKey, i) =>
+						(formatedParams += `${paramKey}=${params[paramKey]}${
+							i !== paramsKeys.length - 1 ? '&' : ''
 						}`)
 				);
 			}
 			const response = await fetch(`${URL}/${formatedParams}`);
 			return await response.text();
 		} catch (e) {
-			console.log(e);
+			console.error(e);
 		}
 	}, []);
 
@@ -124,7 +124,12 @@ const NeatBotContext = ({ children }: IProps) => {
 		): Promise<void> => {
 			setCount_generation(count_generation + 1);
 			const datas = formatData(score, playerPosition, monster, walls);
-			datas !== '[]' && (await send('step_generation', { datas }));
+			datas !== '[]' &&
+				(await send('step_generation', {
+					datas,
+					max_height: window.innerHeight,
+					max_width: window.innerWidth,
+				}));
 		},
 		[send, formatData, count_generation, setCount_generation]
 	);
