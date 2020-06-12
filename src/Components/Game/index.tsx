@@ -182,16 +182,20 @@ const Game = () => {
 
 	// Initialize states and loop
 	const start = useCallback(() => {
-		if (shift.current !== 0) {
-			AI_NEAT_BOT && step_generation(score, playerPosition, lastWallHit, killerMonster);
+		const startLoop = () => {
+			setWalls([]);
+			shift.current = 0;
+			setIsPaused(false);
+			setMonsters([]);
+			score.forEach((_, i) => setScore(i, 0));
+			playerPosition.forEach((_, i) => setLives(i, PLAYER_LIVES_NUMBER));
+			loop();
+		};
+		if (AI_NEAT_BOT && shift.current !== 0) {
+			step_generation(score, playerPosition, lastWallHit, killerMonster).then(startLoop);
+		} else {
+			startLoop();
 		}
-		setWalls([]);
-		shift.current = 0;
-		setIsPaused(false);
-		setMonsters([]);
-		score.forEach((_, i) => setScore(i, 0));
-		playerPosition.forEach((_, i) => setLives(i, PLAYER_LIVES_NUMBER));
-		loop();
 	}, [
 		score,
 		setScore,
