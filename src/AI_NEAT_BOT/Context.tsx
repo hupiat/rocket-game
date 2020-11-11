@@ -81,7 +81,7 @@ const NeatBotContext = ({ children }: IProps) => {
       walls: IWallValues[]
     ): Promise<boolean[]> => {
       const datas = formatData(score, playerPosition, walls);
-      const predictions = datas !== '[]' && (await send(`ask_model?datas=${datas}`));
+      const predictions = datas !== '[]' && (await send(`ask_model?datas=${datas}&max_width=${window.innerWidth}&max_height=${window.innerHeight}`));
       return predictions ? JSON.parse(predictions.toLowerCase()) : [];
     },
     [send, formatData]
