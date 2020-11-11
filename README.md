@@ -6,6 +6,8 @@ The player has a limited lives number, he loses one each time a wall is hit
 
 The score increases each time you pass a wall
 
+Working on Chrome and Firefox
+
 (Enable the sound in your browser to listen the audio)
 
 ## KEYS
