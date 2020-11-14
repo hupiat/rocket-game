@@ -10,6 +10,8 @@ Working on Chrome and Firefox
 
 (Enable the sound in your browser to listen the audio)
 
+![screenshot](./screenshot.png)
+
 ## KEYS
 
 Space arrow : Make the rocket jump
